@@ -16,7 +16,7 @@ module AtmFieldUtils
 ! the field_name is the name of the field internal to the Atm Model
 ! and the file_varname is the name of the variable in the source file
 
-  type Atm_Field_Definition
+  type, public :: Atm_Field_Definition
     character(len=64)                                :: standard_name
     character(len=12)                                :: field_name
     character(len=12)                                :: file_varname
@@ -26,7 +26,7 @@ module AtmFieldUtils
     real(kind=ESMF_KIND_R8), dimension(:,:), pointer :: farrayPtr => null()
   end type Atm_Field_Definition
    
-  integer, parameter :: AtmFieldCount =  6  & !CICE5 only
+  integer, parameter :: AtmFieldCount =  7  & !CICE5 only
                                       +  5  & !MOM6 only 
                                       +  6    !CICE5+MOM6  
 
@@ -91,13 +91,15 @@ module AtmFieldUtils
 
   ! ?? does this exist in output
   ! ?? CICE needs it to calc air density lowest
-  !  ii = ii + 1
-  !  AtmFieldsToExport(ii)%standard_name = 'inst_pres_height_lowest'
-  !  AtmFieldsToExport(ii)%field_name    = 'Plowest'
+    ii = ii + 1
+    AtmFieldsToExport(ii)%standard_name = 'inst_pres_height_lowest'
+    AtmFieldsToExport(ii)%field_name    = 'Plowest'
+  ! temporary work around
+    AtmFieldsToExport(ii)%file_varname  = 'pres'
   !  AtmFieldsToExport(ii)%file_varname  = 'preshy'
   !  AtmFieldsToExport(ii)%from3d        = .true.
-  !  AtmFieldsToExport(ii)%unit_name     = 'Pa'
-  !  AtmFieldsToExport(ii)%farrayPtr => plowest
+    AtmFieldsToExport(ii)%unit_name     = 'Pa'
+    AtmFieldsToExport(ii)%farrayPtr => plowest
   ! ??
 
     ii = ii + 1
@@ -153,7 +155,7 @@ module AtmFieldUtils
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'inst_pres_height_surface'
     AtmFieldsToExport(ii)%field_name    = 'Psurf'
-    AtmFieldsToExport(ii)%file_varname  = 'pressfc'
+    AtmFieldsToExport(ii)%file_varname  = 'pres'
     AtmFieldsToExport(ii)%unit_name     = 'Pa'
     AtmFieldsToExport(ii)%farrayPtr => psurf
 
@@ -193,16 +195,17 @@ module AtmFieldUtils
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_prec_rate'
     AtmFieldsToExport(ii)%field_name    = 'Prate'
-    AtmFieldsToExport(ii)%file_varname  = 'totprcp_ave'
+    AtmFieldsToExport(ii)%file_varname  = 'prate_ave'
     AtmFieldsToExport(ii)%unit_name     = 'kg/m2/s'
     AtmFieldsToExport(ii)%farrayPtr => prate
   ! ??
 
-  ! ?? snow only or do we need to add ice precip rate too?
+  ! ?? snow 
+  ! missing in file, use liquid as workaround
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_fprec_rate'
     AtmFieldsToExport(ii)%field_name    = 'Snwrate'
-    AtmFieldsToExport(ii)%file_varname  = 'totsnw_ave'
+    AtmFieldsToExport(ii)%file_varname  = 'prate_ave'
     AtmFieldsToExport(ii)%unit_name     = 'kg/m2/s'
     AtmFieldsToExport(ii)%farrayPtr => snwrate
   ! ??
@@ -215,8 +218,9 @@ module AtmFieldUtils
 
     call ESMF_LogWrite('AtmFieldsToExport : ', ESMF_LOGMSG_INFO)
     do ii = 1,size(AtmFieldsToExport)
-     write(msgString,'(i6,a12,a2,a)')ii,trim(AtmFieldsToExport(ii)%field_name), &
-                                   '  ',trim(AtmFieldsToExport(ii)%standard_name)
+     write(msgString,'(i6,2(a2,a14),a2,a)')ii,'  ',trim(AtmFieldsToExport(ii)%file_varname), &
+                                              '  ',trim(AtmFieldsToExport(ii)%field_name), &
+                                              '  ',trim(AtmFieldsToExport(ii)%standard_name)
      call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
     enddo
 

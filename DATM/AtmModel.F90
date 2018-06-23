@@ -4,6 +4,7 @@ module AtmModel
 
   use ESMF
   use AtmFields
+  use AtmFieldUtils, only : AtmFieldsToExport
 
   implicit none
 
@@ -26,9 +27,8 @@ module AtmModel
     type(ESMF_Grid)                :: grid
     type(ESMF_Field)               :: field
 
-    integer(kind=ESMF_KIND_I4), pointer :: i4Ptr(:,:)
-
-    integer :: i,j
+              integer :: i,j
+    character(len=12) :: fname
     integer, dimension(2)         ::  lb,  ub
     integer, dimension(2)         :: tlb, tub
     integer, dimension(2)         :: clb, cub
@@ -39,9 +39,9 @@ module AtmModel
 
     call ESMF_GridCompGet(gcomp, grid=grid, rc=rc)
 
-#ifdef test
     ! Get bounds information 
-    call ESMF_StateGet(exportState, itemName='T2m',field=field,rc=rc)
+    fname = trim(AtmFieldsToExport(1)%field_name)
+    call ESMF_StateGet(exportState, itemName=trim(fname),field=field,rc=rc)
     call ESMF_FieldGetBounds(field, localDE=0, &
                              totalLBound=tlb, totalUBound=tub, &
                              computationalLBound=clb, computationalUBound=cub, &
@@ -56,47 +56,12 @@ module AtmModel
     ! Computational
     imin_c = clb(1); imax_c = cub(1)
     jmin_c = clb(2); jmax_c = cub(2)
-    !print '(a5,i4,a41,4i6)','Pet#',lPet,' AtmInit imin,imax,jmin,jmax:', &
-    !                                      imin_e,imax_e,jmin_e,jmax_e
-    ! Get Coord information from Grid
-    call ESMF_GridGetCoord(grid, coordDim=1, &
-                           staggerloc=ESMF_STAGGERLOC_CENTER, &
-                           farrayPtr=atmlonc, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    print *,' AtmInit imin,imax,jmin,jmax:', &
+             imin_e,imax_e,jmin_e,jmax_e
 
-     call ESMF_GridGetCoord(grid, coordDim=2, &
-                           staggerloc=ESMF_STAGGERLOC_CENTER, &
-                           farrayPtr=atmlatc, rc=rc)
-     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__, &
-       file=__FILE__)) &
-       return  ! bail out
-   
-    ! Get the mask from the grid
-    call ESMF_GridGetItem(grid, &
-                          itemFlag=ESMF_GRIDITEM_MASK, &
-                          staggerloc=ESMF_STAGGERLOC_CENTER, &
-                          farrayPtr=i4Ptr, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    call   AtmForce(gcomp,exportState,externalClock,rc)
 
-    allocate(atmfsm(lbound(i4Ptr,1):ubound(i4Ptr,1),lbound(i4Ptr,2):ubound(i4Ptr,2)))
-    do j = jmin_e,jmax_e
-     do i = imin_e,imax_e
-      atmfsm(i,j) = real(i4Ptr(i,j),4)
-     enddo
-    enddo
-    !print *,atmlonc
-    !print *,
-    !print *,atmlatc
-#endif
-
-    !call   AtmForce(gcomp,exportState,externalClock,rc)
+    call ESMF_StateWrite(exportState, "test.nc", rc = rc)
 
     call ESMF_LogWrite("User run routine AtmInit finished", ESMF_LOGMSG_INFO)
    

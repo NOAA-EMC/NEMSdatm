@@ -1818,25 +1818,14 @@ module driver
       file=__FILE__)) &
       return  ! bail out
 
-    ! a coldstart to make a 04-01 restart 
-    !call ESMF_TimeSet(startTime, yy=2015, mm=3, dd=31, h=0, m=0, &
-    !  calkindflag=ESMF_CALKIND_GREGORIAN, rc=rc)
-    !call ESMF_TimeSet(stopTime,  yy=2015, mm=4, dd= 1, h=0, m=0, &
-    !  calkindflag=ESMF_CALKIND_GREGORIAN, rc=rc)
-
-    !call ESMF_TimeSet(startTime, yy=2015, mm=4, dd=1, h=0, m=0, &
-    call ESMF_TimeSet(startTime, yy=2015, mm=6, dd=1, h=0, m=0, &
-    !call ESMF_TimeSet(startTime, yy=2015, mm=9, dd=1, h=0, m=0, &
+    call ESMF_TimeSet(startTime, yy=2017, mm=7, dd=31, h=18, m=0, &
       calkindflag=ESMF_CALKIND_GREGORIAN, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
 
-    !call ESMF_TimeSet(stopTime, yy=2015, mm=4, dd=11, h=0, m=0, &
-    call ESMF_TimeSet(stopTime, yy=2015, mm=6, dd=2, h=0, m=0, &
-    !call ESMF_TimeSet(stopTime, yy=2015, mm=10, dd=01, h=0, m=0, &
-    !call ESMF_TimeSet(stopTime, yy=2015, mm=7, dd=11, h=0, m=0, &
+    call ESMF_TimeSet(stopTime, yy=2017, mm=7, dd=31, h=21, m=0, &
       calkindflag=ESMF_CALKIND_GREGORIAN, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &

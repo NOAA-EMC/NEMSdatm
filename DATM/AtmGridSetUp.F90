@@ -45,7 +45,7 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
   ! read Gaussian coords and land mask from file 
   !-------------------------------------------------------------------------------------
   !Create a distgrid for the lon array
-  distgrid = ESMF_DistGridCreate(minIndex=(/1/), maxIndex=(/idim/),regDecomp=(/1/),rc=rc)
+  distgrid = ESMF_DistGridCreate(minIndex=(/1/), maxIndex=(/idim/),rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
@@ -61,7 +61,7 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
     return  ! bail out
 
   ! a pointer to the array
-  call ESMF_ArrayGet(array1d, farrayPtr=atmlonc, rc = rc)
+  call ESMF_ArrayGet(array1d, farrayPtr=atmlonc, localDe=0, rc = rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
@@ -76,7 +76,7 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
   !print *,coordX
 
   !Create a distgrid for the lat array
-  distgrid = ESMF_DistGridCreate(minIndex=(/1/), maxIndex=(/jdim/), regDecomp=(/1/),rc=rc)
+  distgrid = ESMF_DistGridCreate(minIndex=(/1/), maxIndex=(/jdim/), rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
@@ -107,7 +107,7 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
   !print *,coordY
 
   !Create a distgrid for the mask array
-  distgrid = ESMF_DistGridCreate(minIndex=(/1,1/), maxIndex=(/idim,jdim/),regDecomp=(/1,1/),rc=rc)
+  distgrid = ESMF_DistGridCreate(minIndex=(/1,1/), maxIndex=(/idim,jdim/),rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
@@ -140,8 +140,8 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
   ! create an integer mask containing only land values
                        iland = 0
   where(rland .eq. 1.0)iland = int(rland)
-  print *,minval(rland),maxval(rland)
-  print *,minval(iland),maxval(iland)
+  !print *,minval(rland),maxval(rland)
+  !print *,minval(iland),maxval(iland)
   !-------------------------------------------------------------------------------------
   ! Create the gaussian grid and fill the coords and mask
   !-------------------------------------------------------------------------------------
@@ -194,6 +194,7 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
   !-------------------------------------------------------------------------------------
   ! Add mask 
   !-------------------------------------------------------------------------------------
+  ! retrieve an array for the mask
   call ESMF_GridGetItem(grid, &
                         staggerloc=ESMF_STAGGERLOC_CENTER, &
                         itemFlag=ESMF_GRIDITEM_MASK, &
