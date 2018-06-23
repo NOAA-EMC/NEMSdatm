@@ -61,7 +61,7 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
     return  ! bail out
 
   ! a pointer to the array
-  call ESMF_ArrayGet(array1d, farrayPtr=atmlonc, localDe=0, rc = rc)
+  call ESMF_ArrayGet(array1d, farrayPtr=atmlonc, rc = rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
