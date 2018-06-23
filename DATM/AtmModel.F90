@@ -39,6 +39,7 @@ module AtmModel
 
     call ESMF_GridCompGet(gcomp, grid=grid, rc=rc)
 
+#ifdef test
     ! Get bounds information 
     call ESMF_StateGet(exportState, itemName='T2m',field=field,rc=rc)
     call ESMF_FieldGetBounds(field, localDE=0, &
@@ -57,7 +58,6 @@ module AtmModel
     jmin_c = clb(2); jmax_c = cub(2)
     !print '(a5,i4,a41,4i6)','Pet#',lPet,' AtmInit imin,imax,jmin,jmax:', &
     !                                      imin_e,imax_e,jmin_e,jmax_e
-
     ! Get Coord information from Grid
     call ESMF_GridGetCoord(grid, coordDim=1, &
                            staggerloc=ESMF_STAGGERLOC_CENTER, &
@@ -94,8 +94,9 @@ module AtmModel
     !print *,atmlonc
     !print *,
     !print *,atmlatc
+#endif
 
-    call   AtmForce(gcomp,exportState,externalClock,rc)
+    !call   AtmForce(gcomp,exportState,externalClock,rc)
 
     call ESMF_LogWrite("User run routine AtmInit finished", ESMF_LOGMSG_INFO)
    
@@ -119,7 +120,7 @@ module AtmModel
 
     ! Increment counter
     counter = counter + 1
-    call AtmForce(gcomp,exportState,externalClock,rc)
+    !call AtmForce(gcomp,exportState,externalClock,rc)
 
     ! Prints Atm fields on Atm grid
     !call AtmPrint(gcomp, importState, exportState, externalClock, counter, rc)

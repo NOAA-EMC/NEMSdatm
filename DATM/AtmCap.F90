@@ -196,18 +196,18 @@ module AtmCap
     call AtmGridSetUp(gridIn,petCnt,iatm,jatm,'Atm grid','InitP2 Atm',rc)
     gridOut = gridIn ! for now out same as in
 
-    call AtmFieldsRealize(exportState, gridOut, AtmFieldsToExport, 'Atm Export', rc)
+    !call AtmFieldsRealize(exportState, gridOut, AtmFieldsToExport, 'Atm Export', rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
 
     ! Attach the grid to the Component
-    call ESMF_GridCompSet(model, grid=gridOut, rc=rc)
+    !call ESMF_GridCompSet(model, grid=gridOut, rc=rc)
 
     !call ESMF_GridCompPrint(model, rc=rc)
 
-    call AtmInit(model, importState, exportState, externalClock, rc)
+    !call AtmInit(model, importState, exportState, externalClock, rc)
 
     ! AtmInit calls AtmForce and loads the values for the first integration 
     ! timestep, so.....
@@ -304,7 +304,7 @@ module AtmCap
 
     ! get forcing on each newday
     !if(newday)call AtmRun(model, importState, exportState, clock, rc)
-    call AtmRun(model, importState, exportState, clock, rc)
+    !call AtmRun(model, importState, exportState, clock, rc)
 #ifdef test
     call ESMF_ClockPrint(clock, options="currTime", &
       preString="------>Advancing ATM from: ", rc=rc)

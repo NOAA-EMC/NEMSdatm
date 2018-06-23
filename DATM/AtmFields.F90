@@ -16,15 +16,16 @@ module AtmFields
   integer, public            :: imin_t, imax_t, jmin_t, jmax_t
   integer, public            :: imin_c, imax_c, jmin_c, jmax_c
 
-  integer, parameter, public :: iatm = 192, jatm = 94
+  integer, parameter, public :: iatm = 192, jatm = 96
 
   ! grid associated stagger_center lats,lons,mask
-  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonc(:,:)
-  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlatc(:,:)
+  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonc(:)
+  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlatc(:)
   real(kind=ESMF_KIND_R4), pointer, public, save ::  atmfsm(:,:)
 
-  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonq(:,:)
-  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlatq(:,:)
+  ! stagger_corner lats,lons
+  !real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonq(:)
+  !real(kind=ESMF_KIND_R8), pointer, public, save :: atmlatq(:)
   !-----------------------------------------------------------------------------
   ! Fortran array pointers
   ! Fields for DAtm model 

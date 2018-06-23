@@ -1834,7 +1834,7 @@ module driver
       return  ! bail out
 
     !call ESMF_TimeSet(stopTime, yy=2015, mm=4, dd=11, h=0, m=0, &
-    call ESMF_TimeSet(stopTime, yy=2015, mm=7, dd=1, h=0, m=0, &
+    call ESMF_TimeSet(stopTime, yy=2015, mm=6, dd=2, h=0, m=0, &
     !call ESMF_TimeSet(stopTime, yy=2015, mm=10, dd=01, h=0, m=0, &
     !call ESMF_TimeSet(stopTime, yy=2015, mm=7, dd=11, h=0, m=0, &
       calkindflag=ESMF_CALKIND_GREGORIAN, rc=rc)
