@@ -41,6 +41,9 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
   call ESMF_LogWrite(trim(tag)//" AtmGridSetUp routine started", ESMF_LOGMSG_INFO)
   write(msgString,*)'using ',trim(gridfile),' with petCnt ', petCnt
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+
+  !Decomposed in x only
+  blocklist = (/petCnt,1/)
   !-------------------------------------------------------------------------------------
   ! read Gaussian coords and land mask from file 
   !-------------------------------------------------------------------------------------
@@ -73,7 +76,8 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
-  !print *,coordX
+  print *,'coordX    ',lPet,minval(coordX),maxval(coordX)
+  !print *,'coordX    ',lPet,lbound(coordX,1),ubound(coordX,1)
 
   !Create a distgrid for the lat array
   distgrid = ESMF_DistGridCreate(minIndex=(/1/), maxIndex=(/jdim/), rc=rc)
@@ -104,17 +108,18 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
-  !print *,coordY
+  print *,'coordY    ',lPet,minval(coordY),maxval(coordY)
+  !print *,'coordY    ',lPet,lbound(coordY,1),ubound(coordY,1)
 
   !Create a distgrid for the mask array
-  distgrid = ESMF_DistGridCreate(minIndex=(/1,1/), maxIndex=(/idim,jdim/),rc=rc)
+  distgrid = ESMF_DistGridCreate(minIndex=(/1,1/), maxIndex=(/idim,jdim/), rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
 
   !Create an array from the fortran array
-  array2d = ESMF_ArrayCreate(farray=rland, &
+  array2d = ESMF_ArrayCreate(farray=rland,& 
                              distgrid=distgrid, &
                              indexflag=AtmIndexType, rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -135,6 +140,8 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
+  !print *,'atmfsm    ',lPet,lbound(atmfsm,1),ubound(atmfsm,1), &
+  !                          ubound(atmfsm,2),ubound(atmfsm,2)
 
   ! rland contains values (0,1,2) for ocean,land,ice
   ! create an integer mask containing only land values
@@ -142,11 +149,10 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
   where(rland .eq. 1.0)iland = int(rland)
   !print *,minval(rland),maxval(rland)
   !print *,minval(iland),maxval(iland)
+
   !-------------------------------------------------------------------------------------
   ! Create the gaussian grid and fill the coords and mask
   !-------------------------------------------------------------------------------------
-  !Decomposed in x only
-  blocklist = (/petCnt,1/)
 
   grid = ESMF_GridCreate1PeriDim(maxIndex=(/idim,jdim/), &
                                  regDecomp=blocklist, &
@@ -242,6 +248,8 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
     return  ! bail out
 
   atmlonc = coordX
+  write(msgString, *)'atmlonc ',minval(atmlonc),maxval(atmlonc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
   ! Set the coord in the grid
   call ESMF_GridSetCoord(grid, coordDim=1, &
@@ -269,6 +277,8 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
     return  ! bail out
 
   atmlatc = coordY
+  write(msgString, *)'atmlatc ',minval(atmlatc),maxval(atmlatc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
   ! Set the coord in the grid
   call ESMF_GridSetCoord(grid, coordDim=2, &
@@ -300,11 +310,7 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
     file=__FILE__)) &
     return  ! bail out
 
-    write(msgString, *)'atmlonc ',minval(atmlonc),maxval(atmlonc)
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
-    write(msgString, *)'atmlatc ',minval(atmlatc),maxval(atmlatc)
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
   call ESMF_LogWrite("User AtmGridSetUp routine ended", ESMF_LOGMSG_INFO)
 

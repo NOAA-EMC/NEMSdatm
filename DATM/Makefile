@@ -59,7 +59,7 @@ AtmModel.o: AtmFieldUtils.o
 dust:
 	rm -f PET*.ESMF_LogFile *.nc
 clean:
-	rm -f esmApp *.o *.mod PET*_LogFile
+	rm -f esmApp *.o *.mod PET*_LogFile *.nc
 distclean: dust clean
 
 info:

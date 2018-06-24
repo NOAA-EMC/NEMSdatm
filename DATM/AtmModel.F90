@@ -85,7 +85,7 @@ module AtmModel
 
     ! Increment counter
     counter = counter + 1
-    !call AtmForce(gcomp,exportState,externalClock,rc)
+    call AtmForce(gcomp,exportState,externalClock,rc)
 
     ! Prints Atm fields on Atm grid
     !call AtmPrint(gcomp, importState, exportState, externalClock, counter, rc)

@@ -17,11 +17,13 @@ module AtmCap
 
   use AtmFieldUtils, only : AtmFieldsSetUp
   use AtmFieldUtils, only : AtmFieldsAdvertise, AtmFieldsRealize
+  use AtmFieldUtils, only : AtmFieldDump
+  use AtmFieldUtils, only : AtmFieldCheck
 
   ! AtmInit called by InitializeP2, AtmRun called by ModelAdvance
   use AtmModel,  only : AtmInit, AtmRun, AtmFinal
   
-  use AtmFields, only : iatm,jatm
+  use AtmFields, only : iatm,jatm,lPet
 
   implicit none
   
@@ -29,13 +31,16 @@ module AtmCap
   
   public SetServices
 
-  integer       :: petCnt
+  type(ESMF_VM)   :: vm
+  integer, public :: petCnt
+
+  ! from attributes in coupled system
+  logical, public :: dumpfields = .false.
 
   contains
   
   subroutine SetServices(model, rc)
 
-    type(ESMF_VM)        :: vm
     type(ESMF_GridComp)  :: model
     integer, intent(out) :: rc
     
@@ -115,7 +120,7 @@ module AtmCap
       return  ! bail out
 
     call ESMF_GridCompGet(model, vm=vm, rc=rc)
-    call ESMF_VMGet(vm,petCount=petCnt, rc=rc)
+    call ESMF_VMGet(vm,petCount=petCnt,localPet=lPet,rc=rc)
 
    ! set up the field atts for the Atm component 
     call AtmFieldsSetUp
@@ -131,6 +136,8 @@ module AtmCap
     type(ESMF_Clock)      :: externalClock
     integer, intent(out)  :: rc
 
+    character(len=10)    :: value
+
     rc = ESMF_SUCCESS
 
     call ESMF_LogWrite("User initialize routine InitP0 Atm started", ESMF_LOGMSG_INFO)
@@ -145,6 +152,21 @@ module AtmCap
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+   ! Use attributes
+    call ESMF_AttributeGet(model, &
+                           name="DumpFields", &
+                           value=value, &
+                           defaultValue="true", &
+                           convention="NUOPC", purpose="Instance", rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    dumpfields=(trim(value)=="true")
+
+         if(dumpfields)call ESMF_LogWrite("Dumpfields is  true", ESMF_LOGMSG_INFO)
+    if(.not.dumpfields)call ESMF_LogWrite("Dumpfields is false", ESMF_LOGMSG_INFO)
 
     call ESMF_LogWrite("User initialize routine InitP0 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -192,7 +214,7 @@ module AtmCap
     rc = ESMF_SUCCESS
 
     call ESMF_LogWrite("User initialize routine InitP2 Atm started", ESMF_LOGMSG_INFO)
- 
+
     call AtmGridSetUp(gridIn,petCnt,iatm,jatm,'Atm grid','InitP2 Atm',rc)
     gridOut = gridIn ! for now out same as in
 
@@ -269,9 +291,15 @@ module AtmCap
     ! true on first timestep of new day
     logical :: newday
 
+                       integer :: i,j
+                       integer :: idumpcnt = 0
+    character(len=ESMF_MAXSTR) :: msgString
+
     rc = ESMF_SUCCESS
   
     call ESMF_LogWrite("User routine ModelAdvance Atm started", ESMF_LOGMSG_INFO)
+
+    idumpcnt = idumpcnt + 1
 
     ! query the Component for its clock, importState and exportState
     call NUOPC_ModelGet(model, modelClock=clock, importState=importState, &
@@ -305,6 +333,21 @@ module AtmCap
     ! get forcing on each newday
     !if(newday)call AtmRun(model, importState, exportState, clock, rc)
     !call AtmRun(model, importState, exportState, clock, rc)
+
+    ! Check Values
+    call AtmFieldCheck(importState, exportState, 'after AtmRun', rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    if(dumpfields)then
+     call AtmFieldDump(importstate, exportstate, 'after AtmRun', idumpcnt, rc)
+     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+       line=__LINE__, &
+       file=__FILE__)) &
+       return  ! bail out
+    endif
 #ifdef test
     call ESMF_ClockPrint(clock, options="currTime", &
       preString="------>Advancing ATM from: ", rc=rc)

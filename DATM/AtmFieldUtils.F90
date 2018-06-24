@@ -35,6 +35,8 @@ module AtmFieldUtils
   ! called by Cap
   public :: AtmFieldsSetUp
   public :: AtmFieldsAdvertise, AtmFieldsRealize
+  public :: AtmFieldCheck
+  public :: AtmFieldDump
 
   contains
 
@@ -316,4 +318,99 @@ module AtmFieldUtils
 
     call ESMF_LogWrite("User routine AtmFieldsRealize "//trim(tag)//" finished", ESMF_LOGMSG_INFO)
   end subroutine AtmFieldsRealize
+
+  !-------------------------------------------------------------------------------------
+
+  subroutine AtmFieldCheck(importState, exportState, tag, rc)
+
+  type(ESMF_State)              :: importState, exportState
+  character(len=*), intent( in) :: tag
+           integer, intent(out) :: rc
+
+  type(ESMF_Field) :: field
+
+  integer :: ii, nfields
+  character(len=ESMF_MAXSTR) :: msgString
+
+  ! Initialize return code
+  rc = ESMF_SUCCESS
+
+  !-----------------------------------------------------------------------------
+  ! Check Fields
+  !-----------------------------------------------------------------------------
+
+  nfields = size(AtmFieldsToExport)
+  do ii = 1,nfields
+    call ESMF_StateGet(exportState, &
+                       itemName=trim(AtmFieldsToExport(ii)%field_name), &
+                       field=field, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    call ESMF_FieldGet(field, farrayPtr=AtmFieldsToExport(ii)%farrayPtr, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    write (msgString,*)trim(tag), ' AtmFieldsToExport ',&
+                       trim(AtmFieldsToExport(ii)%field_name),' min,max,sum ',&
+                       minval(real(AtmFieldsToExport(ii)%farrayPtr,4)),&
+                       maxval(real(AtmFieldsToExport(ii)%farrayPtr,4)),&
+                          sum(real(AtmFieldsToExport(ii)%farrayPtr,4))
+     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+   enddo
+
+  end subroutine AtmFieldCheck
+
+  !-----------------------------------------------------------------------------
+
+  subroutine AtmFieldDump(importState, exportState, tag, iicnt, rc)
+
+  type(ESMF_State)              :: importState
+  type(ESMF_State)              :: exportState
+  character(len=*), intent( in) :: tag
+           integer, intent( in) :: iicnt
+           integer, intent(out) :: rc
+
+  ! Local variables
+  type(ESMF_Field)                 :: field
+
+  integer :: ii,nfields
+  character(len=ESMF_MAXSTR) :: varname
+  character(len=ESMF_MAXSTR) :: fname
+  character(len=ESMF_MAXSTR) :: filename
+  character(len=ESMF_MAXSTR) :: msgString
+
+  ! Initialize return code
+  rc = ESMF_SUCCESS
+
+  call ESMF_LogWrite("User routine AtmFieldDump started", ESMF_LOGMSG_INFO)
+
+  ! Atm variables in exportState
+  nfields = size(AtmFieldsToExport)
+  do ii = 1,nfields
+   call ESMF_StateGet(exportState, &
+                      itemName = trim(AtmFieldsToExport(ii)%field_name), &
+                      field=field,rc=rc)
+    varname = trim(AtmFieldsToExport(ii)%field_name)
+    if(trim(tag) .eq. 'before AtmRun')filename = 'field_ice_exportb_'//trim(varname)//'.nc'
+    if(trim(tag) .eq.  'after AtmRun')filename = 'field_ice_exporta_'//trim(varname)//'.nc'
+
+    call ESMF_FieldWrite(field, &
+                         fileName=filename, &
+                         variableName=varname, &
+                         overwrite=.true., &
+                         timeslice=iicnt,rc=rc)
+     if(iicnt .eq. 1)then
+      write(msgString, *)'Writing exportState field ',trim(varname),' to ',trim(filename)
+      call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+     endif
+  enddo
+  call ESMF_LogWrite("User routine AtmFieldDump finished", ESMF_LOGMSG_INFO)
+
+  end subroutine AtmFieldDump
+
 end module AtmFieldUtils

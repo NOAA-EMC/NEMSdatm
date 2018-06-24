@@ -17,6 +17,7 @@ module AtmFields
   integer, public            :: imin_c, imax_c, jmin_c, jmax_c
 
   integer, parameter, public :: iatm = 192, jatm = 96
+  integer, public :: lPet
 
   ! grid associated stagger_center lats,lons,mask
   real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonc(:)
