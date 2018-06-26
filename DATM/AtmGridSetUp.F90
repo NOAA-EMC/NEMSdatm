@@ -3,9 +3,8 @@ subroutine AtmGridSetUp(grid,petCnt,idim,jdim,gridname,tag,rc)
 #include "LocalDefs.F90"
 
   use ESMF
-  use AtmFields
-
-  use netcdf
+  use AtmFields, only : lPet, AtmIndexType
+  use AtmFields, only : atmfsm, atmlonc, atmlatc
 
   implicit none
 
