@@ -20,8 +20,9 @@ module AtmFields
   integer, public :: lPet
 
   ! grid associated stagger_center lats,lons,mask
-  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonc(:)
-  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlatc(:)
+  ! coords are defined 2dim here, which makes writing with ESMF_ArrayWrite easy
+  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonc(:,:)
+  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlatc(:,:)
   real(kind=ESMF_KIND_R4), pointer, public, save ::  atmfsm(:,:)
 
   ! stagger_corner lats,lons

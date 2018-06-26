@@ -153,17 +153,18 @@ module AtmCap
       file=__FILE__)) &
       return  ! bail out
 
+   ! TODO: read from nems.configure
    ! Use attributes
-    call ESMF_AttributeGet(model, &
-                           name="DumpFields", &
-                           value=value, &
-                           defaultValue="true", &
-                           convention="NUOPC", purpose="Instance", rc=rc)
+   ! call ESMF_AttributeGet(model, &
+   !                        name="DumpFields", &
+   !                        value=value, &
+   !                        defaultValue="true", &
+   !                        convention="NUOPC", purpose="Instance", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    dumpfields=(trim(value)=="true")
+   ! dumpfields=(trim(value)=="false")
 
          if(dumpfields)call ESMF_LogWrite("Dumpfields is  true", ESMF_LOGMSG_INFO)
     if(.not.dumpfields)call ESMF_LogWrite("Dumpfields is false", ESMF_LOGMSG_INFO)

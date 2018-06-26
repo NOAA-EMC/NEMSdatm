@@ -56,12 +56,10 @@ module AtmModel
     ! Computational
     imin_c = clb(1); imax_c = cub(1)
     jmin_c = clb(2); jmax_c = cub(2)
-    print *,' AtmInit imin,imax,jmin,jmax:', &
-             imin_e,imax_e,jmin_e,jmax_e
+    write(*,'(a,5i5)')'AtmInit lPet: imin,imax,jmin,jmax= ', &
+                      lPet, imin_e,imax_e,jmin_e,jmax_e
 
     call   AtmForce(gcomp,exportState,externalClock,rc)
-
-    call ESMF_StateWrite(exportState, "test.nc", rc = rc)
 
     call ESMF_LogWrite("User run routine AtmInit finished", ESMF_LOGMSG_INFO)
    
