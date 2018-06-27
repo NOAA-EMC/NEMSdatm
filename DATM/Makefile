@@ -24,43 +24,70 @@ endif
 
 include $(ESMFMKFILE)
 
+#localFopt = -C
+#localFopt = -Wunused
+#localFopt = -Wuninitialized
+#localFopt = -Wall
+#localFopt = -ffpe-trap=invalid,zero,overflow
+
 ################################################################################
 ################################################################################
 
 .SUFFIXES: .f90 .F90 .c .C
 
 %.o : %.f90
-	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREENOCPP) $<
+	$(ESMF_F90COMPILER) $(localFopt) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREENOCPP) $<
 
 %.o : %.F90
-	$(ESMF_F90COMPILER) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR) $<
+	$(ESMF_F90COMPILER) $(localFopt) -c $(ESMF_F90COMPILEOPTS) $(ESMF_F90COMPILEPATHS) $(ESMF_F90COMPILEFREECPP) $(ESMF_F90COMPILECPPFLAGS) $<
         
 %.o : %.c
 	$(ESMF_CXXCOMPILER) -c $(ESMF_CXXCOMPILEOPTS) $(ESMF_CXXCOMPILEPATHSLOCAL) $(ESMF_CXXCOMPILEPATHS) $(ESMF_CXXCOMPILECPPFLAGS) $<
 
 %.o : %.C
 	$(ESMF_CXXCOMPILER) -c $(ESMF_CXXCOMPILEOPTS) $(ESMF_CXXCOMPILEPATHSLOCAL) $(ESMF_CXXCOMPILEPATHS) $(ESMF_CXXCOMPILECPPFLAGS) $<
+# ------------------------------------------------------------------------------
+.PHONY: nuopc nuopcinstall
+nuopc: datm.mk
 
+nuopcinstall: install
+
+# ------------------------------------------------------------------------------
+AtmObjs: AtmFields.o AtmFieldUtils.o AtmForce.o AtmGridSetUp.o AtmModel.o LocalDefs.o
+
+#datm.o: $(AtmOBJs)
+
+datm.o: AtmFields.o AtmModel.o AtmFieldUtils.o
+
+AtmModel.o: AtmFields.o AtmFieldUtils.o
+AtmForce.o: AtmFields.o AtmFieldUtils.o
+AtmGridSetUp.o : AtmFields.o
+AtmFieldUtils.o: AtmFields.o
+# -----------------------------------------------------------------------------
+.PRECIOUS: %.o
+%.mk : %.o
+	@echo "# ESMF self-describing build dependency makefile fragment" > $@ 
+	@echo >> $@
+	@echo "ESMF_DEP_FRONT = datm"                >> $@
+	@echo "ESMF_DEP_INCPATH = `pwd`"             >> $@
+	@echo "ESMF_DEP_CMPL_OBJS = `pwd`/"$<        >> $@
+	@echo "ESMF_DEP_LINK_OBJS = `pwd`/libdatm.a" >> $@
+	@echo "ESMF_DEP_SHRD_PATH = "                >> $@
+	@echo "ESMF_DEP_SHRD_LIBS = "                >> $@
+
+datm.mk: libdatm.a
+
+libdatm.a: datm.o $(AtmOBJS)
+	ar cr $@ $^
 
 # -----------------------------------------------------------------------------
-esmApp: esmApp.o Driver.o AtmCap.o AtmFields.o AtmFieldUtils.o AtmForce.o AtmGridSetUp.o AtmModel.o LocalDefs.o
-	$(ESMF_F90LINKER) $(ESMF_F90LINKOPTS) $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS) -o $@ $^ $(ESMF_F90ESMFLINKLIBS)
-
-# module dependencies:
-esmApp.o: Driver.o
-Driver.o: AtmCap.o 
-
-AtmCap.o: AtmFields.o AtmModel.o AtmFieldUtils.o
-AtmModel.o: AtmFieldUtils.o
-
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-.PHONY: dust clean distclean info edit
-dust:
-	rm -f PET*.ESMF_LogFile *.nc
+.PHONY: clean distclean info install
 clean:
-	rm -f esmApp *.o *.mod PET*_LogFile *.nc
-distclean: dust clean
+	rm -f *.a *.mk *.o *.mod
+distclean: clean
+	rm -f *.o *.mod
+
+PWDIR := `pwd`
 
 info:
 	@echo ==================================================================
@@ -69,5 +96,9 @@ info:
 	@cat $(ESMFMKFILE)
 	@echo ==================================================================
 
-edit:
-	nedit esmApp.F90 driver.F90 AtmModel.F90 &
+install: datm.mk
+	@mkdir -p $(DESTDIR)/$(INSTDIR)
+	@cp libdatm.a datm.mod $(DESTDIR)/$(INSTDIR)
+	@sed -e 's;'$(PWDIR)';'$(DESTDIR)/$(INSTDIR)';g' datm.mk > $(DESTDIR)/$(INSTDIR)/datm.mk
+	@echo Installation into \"$(DESTDIR)/$(INSTDIR)\" complete!
+	@echo
