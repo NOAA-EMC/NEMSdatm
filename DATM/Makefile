@@ -53,11 +53,11 @@ nuopc: datm.mk
 nuopcinstall: install
 
 # ------------------------------------------------------------------------------
-AtmObjs: AtmFields.o AtmFieldUtils.o AtmForce.o AtmGridSetUp.o AtmModel.o LocalDefs.o
+AtmOBJS=AtmFields.o AtmFieldUtils.o AtmForce.o AtmGridSetUp.o AtmModel.o LocalDefs.o
 
-#datm.o: $(AtmOBJs)
+datm.o: $(AtmOBJS)
 
-datm.o: AtmFields.o AtmModel.o AtmFieldUtils.o
+#datm.o: AtmFields.o AtmModel.o AtmFieldUtils.o
 
 AtmModel.o: AtmFields.o AtmFieldUtils.o
 AtmForce.o: AtmFields.o AtmFieldUtils.o
