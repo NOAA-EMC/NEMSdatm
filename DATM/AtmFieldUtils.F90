@@ -396,8 +396,11 @@ module AtmFieldUtils
                       itemName = trim(AtmFieldsToExport(ii)%field_name), &
                       field=field,rc=rc)
     varname = trim(AtmFieldsToExport(ii)%field_name)
-    if(trim(tag) .eq. 'before AtmRun')filename = 'field_ice_exportb_'//trim(varname)//'.nc'
-    if(trim(tag) .eq.  'after AtmRun')filename = 'field_ice_exporta_'//trim(varname)//'.nc'
+    if(trim(tag) .eq. 'before AtmRun')filename = 'field_atm_exportb_'//trim(varname)//'.nc'
+    if(trim(tag) .eq.  'after AtmRun')filename = 'field_atm_exporta_'//trim(varname)//'.nc'
+
+    write(msgString, *)'Writing exportState field ',trim(varname),' to ',trim(filename),' iicnt = ',iicnt
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
     call ESMF_FieldWrite(field, &
                          fileName=filename, &
