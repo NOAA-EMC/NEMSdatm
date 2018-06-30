@@ -25,7 +25,7 @@ subroutine AtmForce(gcomp,exportState,externalClock,rc)
 
   character(len=ESMF_MAXSTR) :: varname
   character(len=ESMF_MAXSTR) :: forcefile
-  character(len=ESMF_MAXSTR) :: dirpath = '/scratch4/NCEPDEV/ocean/save/Denise.Worthen/NEMS_INPUT0.1/DAtm/'
+  character(len=ESMF_MAXSTR) :: dirpath = '/scratch4/NCEPDEV/nems/noscrub/emc.nemspara/RT/DATM-MOM6-CICE5/master-20180627/ATM/'
   character(len=ESMF_MAXSTR) :: msgString
 
   character(len=4) :: cyear
@@ -49,7 +49,7 @@ subroutine AtmForce(gcomp,exportState,externalClock,rc)
   write( cday, i2fmt)day
   write(chour, i2fmt)hour
 
-  forcefile = trim(dirpath)//'gdas.'//trim(cyear)//trim(cmon)//trim(cday)//'.t'//trim(chour)//'z.sfcf006.nc'
+  forcefile = trim(dirpath)//'gdas.t18z.sfcf.'//trim(cyear)//trim(cmon)//trim(cday)//trim(chour)//'.nc'
   ! read the Atm field data
   nfields = size(AtmFieldsToExport)
   do ii = 1,nfields

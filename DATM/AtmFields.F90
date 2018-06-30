@@ -26,8 +26,8 @@ module AtmFields
   real(kind=ESMF_KIND_R4), pointer, public, save ::  atmfsm(:,:)
 
   ! stagger_corner lats,lons
-  !real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonq(:)
-  !real(kind=ESMF_KIND_R8), pointer, public, save :: atmlatq(:)
+  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlonq(:,:)
+  real(kind=ESMF_KIND_R8), pointer, public, save :: atmlatq(:,:)
   !-----------------------------------------------------------------------------
   ! Fortran array pointers
   ! Fields for DAtm model 
