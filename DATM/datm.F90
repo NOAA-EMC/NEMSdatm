@@ -68,7 +68,8 @@ module DAtm
     ! Advertise Fields
     call NUOPC_CompSetEntryPoint(model, &
                                  ESMF_METHOD_INITIALIZE, &
-                                 phaseLabelList=(/"IPDv02p1"/), &
+                                 !phaseLabelList=(/"IPDv02p1"/), &
+                                 phaseLabelList=(/"IPDv01p1"/), &
                                  userRoutine=InitializeP1, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
@@ -78,7 +79,8 @@ module DAtm
     ! Realize Fields
     call NUOPC_CompSetEntryPoint(model, &
                                  ESMF_METHOD_INITIALIZE, &
-                                 phaseLabelList=(/"IPDv02p2"/), &
+                                 !phaseLabelList=(/"IPDv02p2"/), &
+                                 phaseLabelList=(/"IPDv01p3"/), &
                                  userRoutine=InitializeP2, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
@@ -145,7 +147,7 @@ module DAtm
     ! Switch to IPDv02 by filtering all other phaseMap entries
     call NUOPC_CompFilterPhaseMap(model, &
                                   ESMF_METHOD_INITIALIZE, &
-                                  acceptStringList=(/"IPDv02"/), &
+                                  acceptStringList=(/"IPDv01p"/), &
                                   !acceptStringList=(/"IPDv04"/), &
                                   rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -153,18 +155,17 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 
-   ! TODO: read from nems.configure
    ! Use attributes
-   ! call ESMF_AttributeGet(model, &
-   !                        name="DumpFields", &
-   !                        value=value, &
-   !                        defaultValue="true", &
-   !                        convention="NUOPC", purpose="Instance", rc=rc)
+    call ESMF_AttributeGet(model, &
+                           name="DumpFields", &
+                           value=value, &
+                           defaultValue="true", &
+                           convention="NUOPC", purpose="Instance", rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-   ! dumpfields=(trim(value)=="false")
+    dumpfields=(trim(value)=="true")
 
          if(dumpfields)call ESMF_LogWrite("Dumpfields is  true", ESMF_LOGMSG_INFO)
     if(.not.dumpfields)call ESMF_LogWrite("Dumpfields is false", ESMF_LOGMSG_INFO)
