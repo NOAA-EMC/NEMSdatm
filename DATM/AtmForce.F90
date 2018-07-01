@@ -1,5 +1,4 @@
 subroutine AtmForce(gcomp,exportState,externalClock,rc)
-
 #include "LocalDefs.F90"
 
   use ESMF
@@ -25,7 +24,6 @@ subroutine AtmForce(gcomp,exportState,externalClock,rc)
 
   character(len=ESMF_MAXSTR) :: varname
   character(len=ESMF_MAXSTR) :: forcefile
-  character(len=ESMF_MAXSTR) :: dirpath = '/scratch4/NCEPDEV/nems/noscrub/emc.nemspara/RT/DATM-MOM6-CICE5/master-20180627/ATM/'
   character(len=ESMF_MAXSTR) :: msgString
 
   character(len=4) :: cyear

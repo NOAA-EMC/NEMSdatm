@@ -61,7 +61,7 @@ AtmModel.o: AtmFields.o AtmFieldUtils.o
 AtmForce.o: AtmFields.o AtmFieldUtils.o
 AtmGridSetUp.o : AtmFields.o
 AtmFieldUtils.o: AtmFields.o
-AtmGridSetUp.o: AtmGridUtils.o
+AtmGridSetUp.o: AtmFields.o AtmGridUtils.o 
 # -----------------------------------------------------------------------------
 .PRECIOUS: %.o
 %.mk : %.o

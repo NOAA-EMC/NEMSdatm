@@ -13,7 +13,7 @@ module DAtm
     model_label_SetRunClock     => label_SetRunClock, &
     model_label_Advance         => label_Advance
  
-  use AtmFieldUtils, only : AtmFieldsToExport
+  use AtmFieldUtils, only : AtmFieldsToExport, AtmFieldsToImport
 
   use AtmFieldUtils, only : AtmFieldsSetUp
   use AtmFieldUtils, only : AtmFieldsAdvertise, AtmFieldsRealize
@@ -68,8 +68,7 @@ module DAtm
     ! Advertise Fields
     call NUOPC_CompSetEntryPoint(model, &
                                  ESMF_METHOD_INITIALIZE, &
-                                 !phaseLabelList=(/"IPDv02p1"/), &
-                                 phaseLabelList=(/"IPDv01p1"/), &
+                                 phaseLabelList=(/"IPDv02p1"/), &
                                  userRoutine=InitializeP1, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
@@ -79,8 +78,7 @@ module DAtm
     ! Realize Fields
     call NUOPC_CompSetEntryPoint(model, &
                                  ESMF_METHOD_INITIALIZE, &
-                                 !phaseLabelList=(/"IPDv02p2"/), &
-                                 phaseLabelList=(/"IPDv01p3"/), &
+                                 phaseLabelList=(/"IPDv02p2"/), &
                                  userRoutine=InitializeP2, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
@@ -147,7 +145,7 @@ module DAtm
     ! Switch to IPDv02 by filtering all other phaseMap entries
     call NUOPC_CompFilterPhaseMap(model, &
                                   ESMF_METHOD_INITIALIZE, &
-                                  acceptStringList=(/"IPDv01p"/), &
+                                  acceptStringList=(/"IPDv02"/), &
                                   !acceptStringList=(/"IPDv04"/), &
                                   rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -155,6 +153,7 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 
+   ! TODO: read from nems.configure
    ! Use attributes
     call ESMF_AttributeGet(model, &
                            name="DumpFields", &
@@ -192,7 +191,13 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    
+
+    call AtmFieldsAdvertise(importState, AtmFieldsToImport, rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
     call ESMF_LogWrite("User initialize routine InitP1 Atm finished", ESMF_LOGMSG_INFO)
 
   end subroutine InitializeP1
@@ -226,6 +231,12 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 
+    call AtmFieldsRealize(importState, gridOut, AtmFieldsToImport, 'Atm Import', rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
     ! Attach the grid to the Component
     call ESMF_GridCompSet(model, grid=gridOut, rc=rc)
 
@@ -237,6 +248,27 @@ module DAtm
     ! timestep, so.....
     ! -> set Updated Field Attribute to "true", indicating to the IPDv02p5
     ! generic code to set the timestamp for this Field
+#ifdef teset
+    nfields = size(AtmFieldsToImport)
+    do ii = 1,nfields
+      call ESMF_StateGet(importState, &
+                         field=field, &
+                         itemName=trim(AtmFieldsToImport(ii)%field_name), rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      call NUOPC_SetAttribute(field, name="Updated", value="true", rc=rc)
+      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+        line=__LINE__, &
+        file=__FILE__)) &
+        return  ! bail out
+
+      call ESMF_LogWrite(trim(AtmFieldsToImport(ii)%field_name)//' set to Updated', ESMF_LOGMSG_INFO)
+    enddo !ii
+#endif
+
     nfields = size(AtmFieldsToExport)
     do ii = 1,nfields
       call ESMF_StateGet(exportState, &

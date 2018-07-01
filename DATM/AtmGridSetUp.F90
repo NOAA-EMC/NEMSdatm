@@ -3,9 +3,9 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 #include "LocalDefs.F90"
 
   use ESMF
-  use AtmFields, only : lPet, iatm, jatm
+  use AtmFields, only : lPet, iatm, jatm, dirpath, gridfile
   use AtmFields, only : AtmIndexType
-  use AtmFields, only : atmfsm, atmlonc, atmlatc
+  use AtmFields, only : atmlonc, atmlatc, atmlonq, atmlatq
 
   use AtmGridUtils
 
@@ -19,12 +19,8 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 
   ! Local variables
   type(ESMF_Array)                 :: array2d
-  type(ESMF_Distgrid)              :: distgrid
-  type(ESMF_ArraySpec)             :: arrayspec
 
-  character(len=ESMF_MAXSTR) :: gridfile
-  character(len=ESMF_MAXSTR) :: dirpath = '/scratch4/NCEPDEV/nems/noscrub/emc.nemspara/RT/DATM-MOM6-CICE5/master-20180627/ATM/'
-  character(len=ESMF_MAXSTR) :: filename = 'gdas.t18z.sfcf.2018041400.nc'
+  character(len=ESMF_MAXSTR) :: filename
   character(len=ESMF_MAXSTR) ::  varname
   character(len=ESMF_MAXSTR) :: msgString
 
@@ -36,14 +32,15 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   real(kind=ESMF_KIND_R8), allocatable :: coordXc(:),coordYc(:)
   ! gaussian grid corner coords
   real(kind=ESMF_KIND_R8), allocatable :: coordXq(:),coordYq(:)
+  ! gaussian grid landsfc mask
+  real(kind=ESMF_KIND_R4), allocatable :: landsfc(:,:)
 
-  ! for now, hardwired file for retrieving mask and coords
-  gridfile = trim(dirpath)//trim(filename)
+  filename = trim(dirpath)//trim(gridfile)
 
   rc = ESMF_SUCCESS
 
   call ESMF_LogWrite(trim(tag)//" AtmGridSetUp routine started", ESMF_LOGMSG_INFO)
-  write(msgString,*)'using ',trim(gridfile)
+  write(msgString,*)'using ',trim(filename)
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
   write(msgString,*)'petCnt = ',petCnt,' lPet =  ', lPet
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
@@ -52,6 +49,8 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   !blocklist = (/petCnt,1/)
   !Decomposed in y only
   !blocklist = (/1,petCnt/)
+  !Decomposed in xy 
+  !blocklist = (/petCnt/2,petCnt/2/)
   !-------------------------------------------------------------------------------------
   ! read Gaussian coords from file. Native EMSF_ArrayRead does not read Y coord from
   ! file correctly
@@ -60,8 +59,8 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   allocate(coordXc(1:iatm)); allocate(coordXq(1:iatm  ))
   allocate(coordYc(1:jatm)); allocate(coordYq(1:jatm+1))
 
-  call ReadCoordFromFile(trim(gridfile),trim('lon'),iatm,coordXc)
-  call ReadCoordFromFile(trim(gridfile),trim('lat'),jatm,coordYc)
+  call ReadCoordFromFile(trim(filename),trim('lon'),iatm,coordXc)
+  call ReadCoordFromFile(trim(filename),trim('lat'),jatm,coordYc)
 
   write(msgString,*)'coordXc,   ',lPet,minval(real(coordXc,4)), &
                                        maxval(real(coordXc,4))
@@ -92,10 +91,19 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
   !-------------------------------------------------------------------------------------
+  ! ESMF_ArrayRead can read the mask from the file, but it is the wrong type (r4) and
+  ! so requires working around that. Easier to just get global mask array like for the
+  ! coords
+  !-------------------------------------------------------------------------------------
+
+  allocate(landsfc(1:iatm,1:jatm))
+  call ReadMaskFromFile(trim(filename), trim('landsfc'), landsfc)
+
+  !-------------------------------------------------------------------------------------
   ! Create the gaussian grid and fill the coords and mask
   !-------------------------------------------------------------------------------------
   grid = ESMF_GridCreate1PeriDim(maxIndex=(/iatm,jatm/), &
-                                 !regDecomp=blocklist, &
+  !                               regDecomp=blocklist, &
                                  coordDep1=(/1,2/), &            ! grid is defined with 2d
                                  coordDep2=(/1,2/), &            ! lat,lon arrays
                                  periodicDim=1,&
@@ -140,50 +148,12 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
     file=__FILE__)) &
     return  ! bail out
   !-------------------------------------------------------------------------------------
-  ! Read the mask from a file
+  ! Add coords
   !-------------------------------------------------------------------------------------
-  ! get the distgrid
-  call ESMF_GridGet(grid, distgrid=distgrid, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
 
-  ! A rank2, r4 arrayspec for the mask
-  call ESMF_ArraySpecSet(arrayspec, rank=2, typekind=ESMF_TYPEKIND_R4, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  call AddCoord2Grid(grid, ESMF_STAGGERLOC_CENTER, iatm, jatm  , coordXc, coordYc, rc)
+  call AddCoord2Grid(grid, ESMF_STAGGERLOC_CORNER, iatm, jatm+1, coordXq, coordYq, rc)
 
-  !Create an array
-  array2d = ESMF_ArrayCreate(arrayspec=arrayspec, &
-                             distgrid=distgrid, &
-                             indexflag=AtmIndexType, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
-
-  ! a pointer to the array
-  call ESMF_ArrayGet(array2d, farrayPtr=atmfsm, rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
-
-  ! Read the mask from a file
-  call ESMF_ArrayRead(array2d,trim(gridfile), variableName='landsfc',rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
-
-  write(msgString,*)'atmfsm,   ',lPet,lbound(atmfsm,1),ubound(atmfsm,1), &
-                                      lbound(atmfsm,2),ubound(atmfsm,2), &
-                                      minval(real(atmfsm,4)), &
-                                      maxval(real(atmfsm,4))
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
   !-------------------------------------------------------------------------------------
   ! Add mask 
   !-------------------------------------------------------------------------------------
@@ -208,8 +178,12 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
   !fill the value using the landsfc mask
-                        i4Ptr = 0
-  where(atmfsm .eq. 1.0)i4Ptr = int(atmfsm)
+  i4Ptr = 0
+   do j = lbound(i4Ptr,2),ubound(i4Ptr,2)
+    do i = lbound(i4Ptr,1),ubound(i4Ptr,1)
+     if(landsfc(i,j) .eq. 1.0)i4Ptr(i,j) = int(landsfc(i,j))
+    enddo
+   enddo
 
   ! Set the mask value in the grid
   call ESMF_GridSetItem(grid, &
@@ -220,12 +194,10 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
-  !-------------------------------------------------------------------------------------
-  ! Add coords, then write them 
-  !-------------------------------------------------------------------------------------
 
-  call AddCoord2Grid(grid, ESMF_STAGGERLOC_CENTER, iatm, jatm  , coordXc, coordYc, rc)
-  call AddCoord2Grid(grid, ESMF_STAGGERLOC_CORNER, iatm, jatm+1, coordXq, coordYq, rc)
+  !-------------------------------------------------------------------------------------
+  ! Write coords and mask to file
+  !-------------------------------------------------------------------------------------
 
   call WriteCoord(grid, ESMF_STAGGERLOC_CENTER, 1, 'atmlonc', lPet, rc)
   call WriteCoord(grid, ESMF_STAGGERLOC_CENTER, 2, 'atmlatc', lPet, rc)
@@ -236,6 +208,7 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 
   deallocate(coordXc); deallocate(coordXq)
   deallocate(coordYc); deallocate(coordYq)
+  deallocate(landsfc)
 
   call ESMF_LogWrite("User AtmGridSetUp routine ended", ESMF_LOGMSG_INFO)
 

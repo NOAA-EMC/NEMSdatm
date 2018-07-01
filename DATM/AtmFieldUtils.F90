@@ -31,6 +31,8 @@ module AtmFieldUtils
                                       +  6    !CICE5+MOM6  
 
   type(Atm_Field_Definition),   public :: AtmFieldsToExport(AtmFieldCount)
+  ! Mediator requires land_mask to be exported?
+  type(Atm_Field_Definition),   public :: AtmFieldsToImport(1)
 
   ! called by Cap
   public :: AtmFieldsSetUp
@@ -50,6 +52,20 @@ module AtmFieldUtils
   ! default values
   AtmFieldsToExport(:)%from3d      = .false.
   AtmFieldsToExport(:)%staggertype = 'center'
+
+  AtmFieldsToImport(:)%staggertype = 'center'
+
+    ii = 0
+  !-----------------------------------------------------------------------------
+  !Atm Import Fields (req by Mediator ?)
+  !-----------------------------------------------------------------------------
+
+    ii = ii + 1
+    AtmFieldsToImport(ii)%standard_name = 'land_mask'
+    AtmFieldsToImport(ii)%field_name    = 'LandMask'
+    AtmFieldsToImport(ii)%file_varname  = ' '
+    AtmFieldsToImport(ii)%unit_name     = '1'
+    AtmFieldsToImport(ii)%farrayPtr => land_mask
 
     ii = 0
   !-----------------------------------------------------------------------------
