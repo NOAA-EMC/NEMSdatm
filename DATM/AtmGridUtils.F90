@@ -11,7 +11,7 @@ module AtmGridUtils
   private
 
   ! called by AtmGridSetUp
-  public :: ReadCoordFromFile
+  public :: ReadCoordFromFile, ReadMaskFromFile
   public :: AddCoord2Grid, WriteCoord, WriteMask 
  
   contains
@@ -35,6 +35,26 @@ module AtmGridUtils
   rc = nf90_close(ncid)
 
   end subroutine ReadCoordFromFile
+
+  !-------------------------------------------------------------------------------------
+
+  subroutine ReadMaskFromFile(filename,maskname,maskarray)
+
+  use netcdf
+  use AtmFields, only : iatm, jatm
+
+          character(len=*), intent(in) :: filename, maskname
+
+  real(kind=ESMF_KIND_R4), intent(out) :: maskarray(iatm,jatm)
+
+  integer :: ncid, varid, rc
+
+  rc = nf90_open(trim(filename), nf90_nowrite, ncid)
+  rc = nf90_inq_varid(ncid, trim(maskname), varid)
+  rc = nf90_get_var(ncid, varid, maskarray)
+  rc = nf90_close(ncid)
+
+  end subroutine ReadMaskFromFile
 
   !-------------------------------------------------------------------------------------
 
