@@ -31,7 +31,7 @@ module AtmFieldUtils
                                       +  6    !CICE5+MOM6  
 
   type(Atm_Field_Definition),   public :: AtmFieldsToExport(AtmFieldCount)
-  ! Mediator requires land_mask to be exported?
+  ! Mediator requires land_mask to be imported?
   type(Atm_Field_Definition),   public :: AtmFieldsToImport(1)
 
   ! called by Cap

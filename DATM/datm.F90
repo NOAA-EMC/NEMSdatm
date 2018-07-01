@@ -13,7 +13,8 @@ module DAtm
     model_label_SetRunClock     => label_SetRunClock, &
     model_label_Advance         => label_Advance
  
-  use AtmFieldUtils, only : AtmFieldsToExport, AtmFieldsToImport
+  use AtmFieldUtils, only : AtmFieldsToExport
+  use AtmFieldUtils, only : AtmFieldsToImport
 
   use AtmFieldUtils, only : AtmFieldsSetUp
   use AtmFieldUtils, only : AtmFieldsAdvertise, AtmFieldsRealize

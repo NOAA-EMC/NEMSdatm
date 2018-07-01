@@ -70,36 +70,55 @@ module AtmGridUtils
 
                  integer, intent(out) :: rc
 
-    integer :: i,j
+    integer :: i,j,lde,localDECount
     real(kind=ESMF_KIND_R8), pointer  :: r8Ptr(:,:)
 
   ! Initialize return code
   rc = ESMF_SUCCESS
 
-  ! retrieve an array for the first coord
-  call ESMF_GridGetCoord(grid, &
+  call ESMF_GridGet(grid, localDECount=localDECount, rc=rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    line=__LINE__, &
+    file=__FILE__)) &
+    return  ! bail out
+
+  do lde = 0,localDECount-1
+
+  ! Retrieve a pointer to the first coord 
+  call ESMF_GridGetCoord(grid, localDE=lde,&
                         coordDim=1, &
                         staggerloc=stagger, &
-                        array=array2d, rc=rc)
+                        farrayPtr=r8Ptr, rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
 
-  ! a pointer to the array
-  call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
-  print *,lbound(r8Ptr,1),ubound(r8Ptr,1),lbound(coordX,1),ubound(coordX,1)
-
-  ! fill the values from the coordXc farray
-  do i = lbound(r8Ptr,1),ubound(r8Ptr,1)
-   r8Ptr(i,:) = coordX(i)
+  ! fill the values from the coordX farray
+  do j = lbound(r8Ptr,2),ubound(r8Ptr,2)
+   do i = lbound(r8Ptr,1),ubound(r8Ptr,1)
+    r8Ptr(i,j) = coordX(i)
+   enddo
   enddo
 
-  ! Set the coord in the grid, not required?
+  ! get an array from the grid to set the coord in the grid
+  call ESMF_GridGetCoord(grid, &
+                         coordDim=1, &
+                         staggerloc=stagger, &
+                         array=array2d, rc=rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    line=__LINE__, &
+    file=__FILE__)) &
+    return  ! bail out
+
+  ! a pointer to the array on this DE
+  call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, localDE=lde, rc = rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    line=__LINE__, &
+    file=__FILE__)) &
+    return  ! bail out
+
+  ! Set the first coord in the grid
   call ESMF_GridSetCoord(grid, &
                         coordDim=1, &
                         staggerloc=stagger, &
@@ -109,30 +128,41 @@ module AtmGridUtils
     file=__FILE__)) &
     return  ! bail out
 
-  ! retrieve an array for the second coord
-  call ESMF_GridGetCoord(grid, &
+  ! Retrieve a pointer to the second coord 
+  call ESMF_GridGetCoord(grid, localDE=lde,&
                         coordDim=2, &
                         staggerloc=stagger, &
-                        array=array2d, rc=rc)
+                        farrayPtr=r8Ptr, rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
-
-  ! a pointer to the array
-  call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
-  print *,lbound(r8Ptr,2),ubound(r8Ptr,2),lbound(coordY,1),ubound(coordY,1)
 
   ! fill the values from the coordY farray
   do j = lbound(r8Ptr,2),ubound(r8Ptr,2)
-   r8Ptr(:,j) = coordY(j)
+   do i = lbound(r8Ptr,1),ubound(r8Ptr,1)
+    r8Ptr(i,j) = coordY(j)
+   enddo
   enddo
 
-  ! Set the coord in the grid, not required?
+  ! get an array from the grid to set the coord in the grid
+  call ESMF_GridGetCoord(grid, &
+                         coordDim=2, &
+                         staggerloc=stagger, &
+                         array=array2d, rc=rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    line=__LINE__, &
+    file=__FILE__)) &
+    return  ! bail out
+
+  ! a pointer to the array on this DE
+  call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, localDE=lde, rc = rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    line=__LINE__, &
+    file=__FILE__)) &
+    return  ! bail out
+
+  ! Set the second coord in the grid
   call ESMF_GridSetCoord(grid, &
                         coordDim=2, &
                         staggerloc=stagger, &
@@ -141,6 +171,8 @@ module AtmGridUtils
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
+
+  enddo !lde
 
   end subroutine AddCoord2Grid
 
@@ -239,7 +271,7 @@ module AtmGridUtils
     return  ! bail out
 
   !a pointer to the mask
-  call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, rc = rc)
+  call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, localDE=0, rc = rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &

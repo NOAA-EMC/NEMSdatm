@@ -5,7 +5,6 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   use ESMF
   use AtmFields, only : lPet, iatm, jatm, dirpath, gridfile
   use AtmFields, only : AtmIndexType
-  use AtmFields, only : atmlonc, atmlatc, atmlonq, atmlatq
 
   use AtmGridUtils
 
@@ -24,7 +23,7 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   character(len=ESMF_MAXSTR) ::  varname
   character(len=ESMF_MAXSTR) :: msgString
 
-  integer :: i,j,blocklist(2)
+  integer :: i,j,lde,blocklist(2),localDECount
   integer(kind=ESMF_KIND_I4), pointer  :: i4Ptr(:,:)
      real(kind=ESMF_KIND_R8), pointer  :: r8Ptr(:,:)
 
@@ -45,12 +44,12 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   write(msgString,*)'petCnt = ',petCnt,' lPet =  ', lPet
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
-  !Decomposed in x only
+  !Decomposed in x only (default)
   !blocklist = (/petCnt,1/)
   !Decomposed in y only
   !blocklist = (/1,petCnt/)
   !Decomposed in xy 
-  !blocklist = (/petCnt/2,petCnt/2/)
+  blocklist = (/petCnt/2,petCnt/2/)
   !-------------------------------------------------------------------------------------
   ! read Gaussian coords from file. Native EMSF_ArrayRead does not read Y coord from
   ! file correctly
@@ -103,7 +102,7 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   ! Create the gaussian grid and fill the coords and mask
   !-------------------------------------------------------------------------------------
   grid = ESMF_GridCreate1PeriDim(maxIndex=(/iatm,jatm/), &
-  !                               regDecomp=blocklist, &
+                                 regDecomp=blocklist, &
                                  coordDep1=(/1,2/), &            ! grid is defined with 2d
                                  coordDep2=(/1,2/), &            ! lat,lon arrays
                                  periodicDim=1,&
@@ -116,6 +115,14 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
+
+  call ESMF_GridGet(grid, localDECount=localDECount, rc=rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    line=__LINE__, &
+    file=__FILE__)) &
+    return  ! bail out
+  !print *,'localDECount = ',localDECount
+
   !-------------------------------------------------------------------------------------
   ! Allocate storage for coords and mask
   !-------------------------------------------------------------------------------------
@@ -157,7 +164,28 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   !-------------------------------------------------------------------------------------
   ! Add mask 
   !-------------------------------------------------------------------------------------
-  ! retrieve an array for the mask
+
+  do lde = 0,localDECount-1
+
+  ! retrieve a pointer for the mask
+  call ESMF_GridGetItem(grid, localDE=lde,&
+                        staggerloc=ESMF_STAGGERLOC_CENTER, &
+                        itemFlag=ESMF_GRIDITEM_MASK, &
+                        farrayPtr=i4Ptr, rc=rc)
+  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+    line=__LINE__, &
+    file=__FILE__)) &
+    return  ! bail out
+
+  !fill the value using the landsfc mask
+  i4Ptr = 0
+   do j = lbound(i4Ptr,2),ubound(i4Ptr,2)
+    do i = lbound(i4Ptr,1),ubound(i4Ptr,1)
+     if(landsfc(i,j) .eq. 1.0)i4Ptr(i,j) = int(landsfc(i,j))
+    enddo
+   enddo
+
+  ! get an array from the grid to set the mask
   call ESMF_GridGetItem(grid, &
                         staggerloc=ESMF_STAGGERLOC_CENTER, &
                         itemFlag=ESMF_GRIDITEM_MASK, &
@@ -167,23 +195,12 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
     file=__FILE__)) &
     return  ! bail out
 
-  !a pointer to the mask array
-  call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, rc = rc)
+  ! a pointer to the array on this DE
+  call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, localDE=lde, rc = rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
-  write(msgString,*)'i4Ptr,   ',lPet,lbound(i4Ptr,1),ubound(i4Ptr,1), &
-                                     lbound(i4Ptr,2),ubound(i4Ptr,2)
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-
-  !fill the value using the landsfc mask
-  i4Ptr = 0
-   do j = lbound(i4Ptr,2),ubound(i4Ptr,2)
-    do i = lbound(i4Ptr,1),ubound(i4Ptr,1)
-     if(landsfc(i,j) .eq. 1.0)i4Ptr(i,j) = int(landsfc(i,j))
-    enddo
-   enddo
 
   ! Set the mask value in the grid
   call ESMF_GridSetItem(grid, &
@@ -195,6 +212,7 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
     file=__FILE__)) &
     return  ! bail out
 
+  enddo !lde
   !-------------------------------------------------------------------------------------
   ! Write coords and mask to file
   !-------------------------------------------------------------------------------------
