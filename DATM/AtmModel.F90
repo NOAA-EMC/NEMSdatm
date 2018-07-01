@@ -5,6 +5,7 @@ module AtmModel
   use ESMF
   use AtmFields
   use AtmFieldUtils, only : AtmFieldsToExport
+  use AtmFieldUtils, only : AtmFieldsToImport
 
   implicit none
 
@@ -29,9 +30,12 @@ module AtmModel
 
               integer :: i,j
     character(len=12) :: fname
+
     integer, dimension(2)         ::  lb,  ub
     integer, dimension(2)         :: tlb, tub
     integer, dimension(2)         :: clb, cub
+
+    integer(kind=ESMF_KIND_I4), pointer  :: i4Ptr(:,:)
 
     rc = ESMF_SUCCESS
 
@@ -58,6 +62,70 @@ module AtmModel
     jmin_c = clb(2); jmax_c = cub(2)
     write(*,'(a,5i5)')'AtmInit lPet: imin,imax,jmin,jmax= ', &
                       lPet, imin_e,imax_e,jmin_e,jmax_e
+
+    ! Get Coord information from Grid
+    call ESMF_GridGetCoord(grid, coordDim=1, &
+                           staggerloc=ESMF_STAGGERLOC_CENTER, &
+                           farrayPtr=atmlonc, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+     call ESMF_GridGetCoord(grid, coordDim=2, &
+                           staggerloc=ESMF_STAGGERLOC_CENTER, &
+                           farrayPtr=atmlatc, rc=rc)
+     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+       line=__LINE__, &
+       file=__FILE__)) &
+       return  ! bail out
+
+    call ESMF_GridGetCoord(grid, coordDim=1, &
+                           staggerloc=ESMF_STAGGERLOC_CORNER, &
+                           farrayPtr=atmlonq, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+     call ESMF_GridGetCoord(grid, coordDim=2, &
+                           staggerloc=ESMF_STAGGERLOC_CORNER, &
+                           farrayPtr=atmlatq, rc=rc)
+     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+       line=__LINE__, &
+       file=__FILE__)) &
+       return  ! bail out
+
+    ! Get the mask from the grid
+    call ESMF_GridGetItem(grid, &
+                          itemFlag=ESMF_GRIDITEM_MASK, &
+                          staggerloc=ESMF_STAGGERLOC_CENTER, &
+                          farrayPtr=i4Ptr, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+   
+    ! The land_mask array from the grid mask
+    call ESMF_StateGet(importState, &
+                       itemName=trim('LandMask'), &
+                       field=field, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+ 
+    call ESMF_FieldGet(field,farrayPtr=land_mask,rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+  
+    do j = jmin_e,jmax_e
+     do i = imin_e,imax_e
+      land_mask(i,j) = real(i4Ptr(i,j),8)
+     enddo
+    enddo
 
     call   AtmForce(gcomp,exportState,externalClock,rc)
 
