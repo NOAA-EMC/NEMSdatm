@@ -65,6 +65,7 @@ module AtmModel
 
     ! Get Coord information from Grid
     call ESMF_GridGetCoord(grid, coordDim=1, &
+                           localDe=0,&
                            staggerloc=ESMF_STAGGERLOC_CENTER, &
                            farrayPtr=atmlonc, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -73,6 +74,7 @@ module AtmModel
       return  ! bail out
 
      call ESMF_GridGetCoord(grid, coordDim=2, &
+                           localDe=0,&
                            staggerloc=ESMF_STAGGERLOC_CENTER, &
                            farrayPtr=atmlatc, rc=rc)
      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -81,6 +83,7 @@ module AtmModel
        return  ! bail out
 
     call ESMF_GridGetCoord(grid, coordDim=1, &
+                           localDe=0,&
                            staggerloc=ESMF_STAGGERLOC_CORNER, &
                            farrayPtr=atmlonq, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -89,6 +92,7 @@ module AtmModel
       return  ! bail out
 
      call ESMF_GridGetCoord(grid, coordDim=2, &
+                           localDe=0,&
                            staggerloc=ESMF_STAGGERLOC_CORNER, &
                            farrayPtr=atmlatq, rc=rc)
      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -98,6 +102,7 @@ module AtmModel
 
     ! Get the mask from the grid
     call ESMF_GridGetItem(grid, &
+                          localDe=0,&
                           itemFlag=ESMF_GRIDITEM_MASK, &
                           staggerloc=ESMF_STAGGERLOC_CENTER, &
                           farrayPtr=i4Ptr, rc=rc)
