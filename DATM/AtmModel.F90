@@ -36,6 +36,7 @@ module AtmModel
     integer, dimension(2)         :: clb, cub
 
     integer(kind=ESMF_KIND_I4), pointer  :: i4Ptr(:,:)
+    character(len=ESMF_MAXSTR) :: msgString
 
     rc = ESMF_SUCCESS
 
@@ -73,14 +74,15 @@ module AtmModel
       file=__FILE__)) &
       return  ! bail out
 
-     call ESMF_GridGetCoord(grid, coordDim=2, &
+
+    call ESMF_GridGetCoord(grid, coordDim=2, &
                            localDe=0,&
                            staggerloc=ESMF_STAGGERLOC_CENTER, &
                            farrayPtr=atmlatc, rc=rc)
-     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__, &
-       file=__FILE__)) &
-       return  ! bail out
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
     call ESMF_GridGetCoord(grid, coordDim=1, &
                            localDe=0,&
@@ -131,6 +133,21 @@ module AtmModel
       land_mask(i,j) = real(i4Ptr(i,j),8)
      enddo
     enddo
+    write(msgString,*)'AtmInit: ',lPet,minval(real(atmlonc,4)), &
+                                       maxval(real(atmlonc,4))
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    write(msgString,*)'AtmInit: ',lPet,minval(real(atmlatc,4)), &
+                                       maxval(real(atmlatc,4))
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    write(msgString,*)'AtmInit: ',lPet,minval(real(atmlonq,4)), &
+                                       maxval(real(atmlonq,4))
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    write(msgString,*)'AtmInit: ',lPet,minval(real(atmlatq,4)), &
+                                       maxval(real(atmlatq,4))
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    write(msgString,*)'AtmInit: ',lPet,minval(real(land_mask,4)), &
+                                       maxval(real(land_mask,4))
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
     call   AtmForce(gcomp,exportState,externalClock,rc)
 
