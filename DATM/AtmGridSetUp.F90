@@ -44,12 +44,17 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   write(msgString,*)'petCnt = ',petCnt,' lPet =  ', lPet
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
-  !Decomposed in x only (default)
-  !blocklist = (/petCnt,1/)
-  !Decomposed in y only
-  !blocklist = (/1,petCnt/)
-  !Decomposed in xy 
-  blocklist = (/petCnt/2,petCnt/2/)
+  if(petCnt == 1)then
+  !serial
+   blocklist = (/1,1/)
+  else
+   !Decomposed in x only (default)
+   !blocklist = (/petCnt,1/)
+   !Decomposed in y only
+   !blocklist = (/1,petCnt/)
+   !Decomposed in xy 
+   blocklist = (/petCnt/2,petCnt/2/)
+  endif
   !-------------------------------------------------------------------------------------
   ! read Gaussian coords from file. Native EMSF_ArrayRead does not read Y coord from
   ! file correctly

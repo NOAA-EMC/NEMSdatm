@@ -5,8 +5,9 @@ module AtmModel
   use ESMF
   use AtmFields
   use AtmFieldUtils, only : AtmFieldsToExport
+#ifndef toydatm
   use AtmFieldUtils, only : AtmFieldsToImport
-
+#endif
   implicit none
 
   private
@@ -112,7 +113,7 @@ module AtmModel
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-   
+#ifndef toydatm
     ! The land_mask array from the grid mask
     call ESMF_StateGet(importState, &
                        itemName=trim('LandMask'), &
@@ -133,6 +134,12 @@ module AtmModel
       land_mask(i,j) = real(i4Ptr(i,j),8)
      enddo
     enddo
+
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    write(msgString,*)'AtmInit: ',lPet,minval(real(land_mask,4)), &
+                                       maxval(real(land_mask,4))
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+#endif 
     write(msgString,*)'AtmInit: ',lPet,minval(real(atmlonc,4)), &
                                        maxval(real(atmlonc,4))
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
@@ -144,10 +151,6 @@ module AtmModel
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
     write(msgString,*)'AtmInit: ',lPet,minval(real(atmlatq,4)), &
                                        maxval(real(atmlatq,4))
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-    write(msgString,*)'AtmInit: ',lPet,minval(real(land_mask,4)), &
-                                       maxval(real(land_mask,4))
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
     call   AtmForce(gcomp,exportState,externalClock,rc)
 

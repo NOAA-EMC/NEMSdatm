@@ -10,11 +10,14 @@ module DAtm
   use NUOPC
   use NUOPC_Model, &
     model_routine_SS            => SetServices, &
-    model_label_SetRunClock     => label_SetRunClock, &
+    !model_label_SetRunClock     => label_SetRunClock, &
+    model_label_SetClock        => label_SetClock, &
     model_label_Advance         => label_Advance
  
   use AtmFieldUtils, only : AtmFieldsToExport
+#ifndef toydatm
   use AtmFieldUtils, only : AtmFieldsToImport
+#endif
 
   use AtmFieldUtils, only : AtmFieldsSetUp
   use AtmFieldUtils, only : AtmFieldsAdvertise, AtmFieldsRealize
@@ -37,6 +40,7 @@ module DAtm
 
   ! from attributes in coupled system
   logical, public :: dumpfields = .false.
+  logical, public :: profile_memory = .true.
 
   contains
   
@@ -86,6 +90,7 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
     
+#ifdef test
     ! specialize label_SetRunClock which ensures the correct timeStep
     ! is set during the run cycle
     ! -> NUOPC specializes by default --->>> first need to remove the default
@@ -102,8 +107,16 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-
+#endif
     ! attach specializing method(s)
+    ! No need to change clock settings
+    call ESMF_MethodAdd(model, label=model_label_SetClock, &
+      userRoutine=SetClock, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
     call NUOPC_CompSpecialize(model, &
                               specLabel=model_label_Advance, &
                               specRoutine=ModelAdvance, rc=rc)
@@ -143,6 +156,16 @@ module DAtm
 
     call ESMF_LogWrite("User initialize routine InitP0 Atm started", ESMF_LOGMSG_INFO)
 
+    ! like P0 in module_Mediator
+    call ESMF_AttributeGet(model, &
+                           name="Verbosity", &
+                           value=value, &
+                           defaultValue="max", &
+                           convention="NUOPC", purpose="Instance", rc=rc)
+
+    write(msgString,'(A,l6)')'DATM Verbosity = '//trim(value)
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+
     ! Switch to IPDv02 by filtering all other phaseMap entries
     call NUOPC_CompFilterPhaseMap(model, &
                                   ESMF_METHOD_INITIALIZE, &
@@ -154,7 +177,6 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 
-   ! TODO: read from nems.configure
    ! Use attributes
     call ESMF_AttributeGet(model, &
                            name="DumpFields", &
@@ -167,8 +189,21 @@ module DAtm
       return  ! bail out
     dumpfields=(trim(value)=="true")
 
-         if(dumpfields)call ESMF_LogWrite("Dumpfields is  true", ESMF_LOGMSG_INFO)
-    if(.not.dumpfields)call ESMF_LogWrite("Dumpfields is false", ESMF_LOGMSG_INFO)
+    write(msgString,'(A,l6)')'DATM Dumpfields = ',dumpfields
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+
+    !like module_MEDIATOR
+    call ESMF_AttributeGet(model, &
+                           name="ProfileMemory", &
+                           value=value, &
+                           defaultValue="true", &
+                           convention="NUOPC", purpose="Instance", rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, file=__FILE__)) return  ! bail out
+    profile_memory=(trim(value)/="false")
+
+    write(msgString,'(A,l6)')'DATM Profile_memory = ',profile_memory
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
     call ESMF_LogWrite("User initialize routine InitP0 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -193,11 +228,13 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 
+#ifndef toydatm
     call AtmFieldsAdvertise(importState, AtmFieldsToImport, rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+#endif
 
     call ESMF_LogWrite("User initialize routine InitP1 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -231,13 +268,13 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-
+#ifndef toydatm
     call AtmFieldsRealize(importState, gridOut, AtmFieldsToImport, 'Atm Import', rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-
+#endif
     ! Attach the grid to the Component
     call ESMF_GridCompSet(model, grid=gridOut, rc=rc)
 
@@ -249,7 +286,7 @@ module DAtm
     ! timestep, so.....
     ! -> set Updated Field Attribute to "true", indicating to the IPDv02p5
     ! generic code to set the timestamp for this Field
-#ifdef teset
+#ifndef toydatm
     nfields = size(AtmFieldsToImport)
     do ii = 1,nfields
       call ESMF_StateGet(importState, &
@@ -269,7 +306,6 @@ module DAtm
       call ESMF_LogWrite(trim(AtmFieldsToImport(ii)%field_name)//' set to Updated', ESMF_LOGMSG_INFO)
     enddo !ii
 #endif
-
     nfields = size(AtmFieldsToExport)
     do ii = 1,nfields
       call ESMF_StateGet(exportState, &
@@ -337,8 +373,10 @@ module DAtm
     idumpcnt = idumpcnt + 1
 
     ! query the Component for its clock, importState and exportState
-    call NUOPC_ModelGet(model, modelClock=clock, importState=importState, &
-      exportState=exportState, rc=rc)
+    call NUOPC_ModelGet(model, &
+                        modelClock=clock, &
+                        importState=importState, &
+                        exportState=exportState, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -384,23 +422,81 @@ module DAtm
        return  ! bail out
     endif
 #ifdef test
+    call ESMF_ClockPrint(clock, options="startTime", &
+         preString="ModelAdvance with CLOCK start:   ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    call ESMF_ClockPrint(clock, options="stopTime", &
+         preString="ModelAdvance with CLOCK stop:   ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+#endif
+!#ifdef test
     call ESMF_ClockPrint(clock, options="currTime", &
-      preString="------>Advancing ATM from: ", rc=rc)
+      preString="------>Advancing ATM from: ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    
+    call ESMF_ClockPrint(clock, options="stopTime", &
+      preString="--------------------------------> to: ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+!#endif
+    call ESMF_LogWrite("User routine ModelAdvance Atm finished", ESMF_LOGMSG_INFO)
+
+  end subroutine ModelAdvance
+
+  ! like cice_cap, which had the simplest clock settings I could find
+  !-----------------------------------------------------------------------------
+
+  subroutine SetClock(model, rc)
+
+    type(ESMF_GridComp)  :: model
+    integer, intent(out) :: rc
+    
+    ! local variables
+    type(ESMF_Clock)              :: clock
+    type(ESMF_TimeInterval)       :: stabilityTimeStep, timeStep
+
+    ! temp hardwire here
+    real(ESMF_KIND_R4) :: dt = 1800.
+
+    rc = ESMF_SUCCESS
+    
+    ! query the Component for its clock, importState and exportState
+    call ESMF_GridCompGet(model, clock=clock, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    ! tcraig: dt is the cice thermodynamic timestep in seconds
+    call ESMF_TimeIntervalSet(timestep, s=nint(dt), rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    call ESMF_ClockSet(clock, timestep=timestep, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+      
+    ! initialize internal clock
+    ! here: parent Clock and stability timeStep determine actual model timeStep
+    call ESMF_TimeIntervalSet(stabilityTimeStep, s=nint(dt), rc=rc) 
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+    call NUOPC_CompSetClock(model, clock, stabilityTimeStep, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
     
-    call ESMF_ClockPrint(clock, options="stopTime", &
-      preString="--------------------------------> to: ", rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-#endif
-    call ESMF_LogWrite("User routine ModelAdvance Atm finished", ESMF_LOGMSG_INFO)
-
-  end subroutine ModelAdvance
+  end subroutine SetClock
 
   !-----------------------------------------------------------------------------
 
@@ -449,4 +545,5 @@ module DAtm
 
     call ESMF_LogWrite("User routine SetRunClock Atm finished", ESMF_LOGMSG_INFO)
   end subroutine SetRunClock
+
 end module DAtm
