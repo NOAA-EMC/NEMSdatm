@@ -150,7 +150,8 @@ module DAtm
     type(ESMF_Clock)      :: externalClock
     integer, intent(out)  :: rc
 
-    character(len=10)    :: value
+    character(len=10)          :: value
+    character(len=ESMF_MAXSTR) :: msgString
 
     rc = ESMF_SUCCESS
 
@@ -253,12 +254,27 @@ module DAtm
     type(ESMF_Grid)         :: gridIn
     type(ESMF_Grid)         :: gridOut
     type(ESMF_Field)        :: field
+    character(ESMF_MAXSTR)  :: msgString
 
     integer :: ii, nfields
 
     rc = ESMF_SUCCESS
 
     call ESMF_LogWrite("User initialize routine InitP2 Atm started", ESMF_LOGMSG_INFO)
+
+
+    call ESMF_ClockPrint(externalClock, options="currTime", &
+         preString="entering DATM_INITIALIZE with CLOCK_EARTH current: ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    call ESMF_ClockPrint(externalClock, options="startTime", &
+         preString="entering DATM_INITIALIZE with CLOCK_EARTH start:   ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    call ESMF_ClockPrint(externalClock, options="stopTime", &
+         preString="entering DATM_INITIALIZE with CLOCK_EARTH stop:    ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
 
     call AtmGridSetUp(gridIn,petCnt,'Atm grid','InitP2 Atm',rc)
     gridOut = gridIn ! for now out same as in
@@ -281,7 +297,6 @@ module DAtm
     !call ESMF_GridCompPrint(model, rc=rc)
 
     call AtmInit(model, importState, exportState, externalClock, rc)
-
     ! AtmInit calls AtmForce and loads the values for the first integration 
     ! timestep, so.....
     ! -> set Updated Field Attribute to "true", indicating to the IPDv02p5
@@ -336,6 +351,7 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
     call ESMF_LogWrite('Atm InitializeDataComplete', ESMF_LOGMSG_INFO)
 
     call ESMF_LogWrite("User initialize routine InitP2 Atm finished", ESMF_LOGMSG_INFO)
@@ -405,7 +421,7 @@ module DAtm
 
     ! get forcing on each newday
     !if(newday)call AtmRun(model, importState, exportState, clock, rc)
-    !call AtmRun(model, importState, exportState, clock, rc)
+    call AtmRun(model, importState, exportState, clock, rc)
 
     ! Check Values
     call AtmFieldCheck(importState, exportState, 'after AtmRun', rc)
@@ -510,6 +526,8 @@ module DAtm
     type(ESMF_Time)            :: currTime
     type(ESMF_TimeInterval)    :: timeStep
 
+    character(len=ESMF_MAXSTR) :: msgString
+
     rc = ESMF_SUCCESS
 
     call ESMF_LogWrite("User routine SetRunClock Atm started", ESMF_LOGMSG_INFO)
@@ -523,6 +541,15 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 
+    call ESMF_ClockPrint(modelClock, options="currTime", &
+         preString="entering SetRunClock DATM with modelClock current: ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    call ESMF_ClockPrint(driverClock, options="currTime", &
+         preString="entering SetRunClock DATM with driverClock current: ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+
     ! set the modelClock to have the current start time as the driverClock
     call ESMF_ClockGet(driverClock, currTime=currTime, timeStep=timeStep, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
@@ -535,6 +562,11 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
+
+    call ESMF_ClockPrint(modelClock, options="currTime", &
+         preString="after reset SetRunClock modelClock to driverClock : ", &
+         unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
 
     ! check and set the component clock against the driver clock
     call NUOPC_CompCheckSetClock(model, driverClock, rc=rc)
