@@ -289,6 +289,7 @@ module AtmFieldUtils
     type(ESMF_StaggerLoc)  :: staggerloc
 
     integer              :: ii,nfields
+    logical              :: connected
 
     rc = ESMF_SUCCESS
     call ESMF_LogWrite("User routine AtmFieldsRealize "//trim(tag)//" started", ESMF_LOGMSG_INFO)
@@ -311,6 +312,11 @@ module AtmFieldUtils
         line=__LINE__, &
         file=__FILE__)) &
         return  ! bail out
+
+      connected = NUOPC_IsConnected(state, fieldName=trim(field_defs(ii)%field_name), rc=rc)
+      if(     connected)write(msgString,*)'Field '//trim(field_defs(ii)%field_name)//' is connected '
+      if(.not.connected)write(msgString,*)'Field '//trim(field_defs(ii)%field_name)//' is NOT connected '
+      call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
       call NUOPC_Realize(state, field=field, rc=rc)
       if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &

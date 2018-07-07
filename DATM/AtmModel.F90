@@ -135,7 +135,6 @@ module AtmModel
      enddo
     enddo
 
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
     write(msgString,*)'AtmInit: ',lPet,minval(real(land_mask,4)), &
                                        maxval(real(land_mask,4))
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
@@ -151,6 +150,7 @@ module AtmModel
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
     write(msgString,*)'AtmInit: ',lPet,minval(real(atmlatq,4)), &
                                        maxval(real(atmlatq,4))
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
     call   AtmForce(gcomp,exportState,externalClock,rc)
 
