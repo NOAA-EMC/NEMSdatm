@@ -284,9 +284,10 @@ module AtmFieldUtils
     character(len=*),           intent(in   )  :: tag
     integer,                    intent(out  )  :: rc
 
-    type(ESMF_ArraySpec)   :: arrayspecR8
-    type(ESMF_Field)       :: field
-    type(ESMF_StaggerLoc)  :: staggerloc
+    type(ESMF_ArraySpec)       :: arrayspecR8
+    type(ESMF_Field)           :: field
+    type(ESMF_StaggerLoc)      :: staggerloc
+    character(len=ESMF_MAXSTR) :: msgString
 
     integer              :: ii,nfields
     logical              :: connected

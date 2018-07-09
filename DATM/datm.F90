@@ -294,15 +294,15 @@ module DAtm
     call ESMF_LogWrite("User initialize routine InitP2 Atm started", ESMF_LOGMSG_INFO)
 
     call ESMF_ClockPrint(externalClock, options="currTime", &
-         preString="entering DATM_INITIALIZE with CLOCK_EARTH current: ", &
+         preString="InitP2 Atm CLOCK_EARTH current: ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
     call ESMF_ClockPrint(externalClock, options="startTime", &
-         preString="entering DATM_INITIALIZE with CLOCK_EARTH start:   ", &
+         preString="InitP2 Atm CLOCK_EARTH start:   ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
     call ESMF_ClockPrint(externalClock, options="stopTime", &
-         preString="entering DATM_INITIALIZE with CLOCK_EARTH stop:    ", &
+         preString="InitP2 Atm CLOCK_EARTH stop:    ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
 
@@ -448,7 +448,7 @@ module DAtm
        file=__FILE__)) &
        return  ! bail out
     endif
-!#ifdef test
+
     call ESMF_ClockPrint(clock, options="startTime", &
          preString="ModelAdvance DATM with CLOCK start:   ", &
          unit=msgString)
@@ -457,18 +457,7 @@ module DAtm
          preString="ModelAdvance DATM with CLOCK stop:   ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
-!#endif
-#ifdef test
-    call ESMF_ClockPrint(clock, options="currTime", &
-      preString="------>Advancing ATM from: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
-    
-    call ESMF_ClockPrint(clock, options="stopTime", &
-      preString="--------------------------------> to: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
-#endif
+
     call ESMF_LogWrite("User routine ModelAdvance Atm finished", ESMF_LOGMSG_INFO)
 
   end subroutine ModelAdvance
