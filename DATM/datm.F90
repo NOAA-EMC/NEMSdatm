@@ -29,6 +29,7 @@ module DAtm
   use AtmModel,  only : AtmInit, AtmRun, AtmFinal
   
   use AtmFields, only : iatm,jatm,lPet
+  use AtmFields, only : dt_atmos
 
   implicit none
   
@@ -249,7 +250,11 @@ module DAtm
     type(ESMF_State)     :: importState, exportState
     type(ESMF_Clock)     :: externalClock
     integer, intent(out) :: rc
-   
+ 
+    ! local variables
+    type(ESMF_Config)       :: cf
+    character(ESMF_MAXSTR)  :: msgString
+  
     rc = ESMF_SUCCESS
    
     call ESMF_LogWrite("User initialize routine InitP1 Atm started", ESMF_LOGMSG_INFO)
@@ -267,6 +272,24 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 #endif
+
+    ! get config variables, like fv3_cap
+    ! ? could also get npx,npy (npx*npy=nprocs) to set decomposition
+    cf=ESMF_ConfigCreate(rc=rc)
+    CALL ESMF_ConfigLoadFile(config=cf ,filename='model_configure' ,rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    call ESMF_ConfigGetAttribute(config=cf,value=dt_atmos, label ='dt_atmos:',rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    write(msgString,'(a,i6)')'Model configure found with dt_atmos = ',dt_atmos
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
 
     call ESMF_LogWrite("User initialize routine InitP1 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -474,10 +497,6 @@ module DAtm
     type(ESMF_Clock)              :: clock
     type(ESMF_TimeInterval)       :: stabilityTimeStep, timeStep
 
-    ! TODO: Get from config?
-    ! temp hardwire here
-    real(ESMF_KIND_R4) :: dt = 1800.
-
     rc = ESMF_SUCCESS
     
     ! query the Component for its clock
@@ -487,8 +506,7 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 
-    ! tcraig: dt is the cice thermodynamic timestep in seconds
-    call ESMF_TimeIntervalSet(timestep, s=nint(dt), rc=rc)
+    call ESMF_TimeIntervalSet(timestep, s=dt_atmos, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -502,7 +520,7 @@ module DAtm
       
     ! initialize internal clock
     ! here: parent Clock and stability timeStep determine actual model timeStep
-    call ESMF_TimeIntervalSet(stabilityTimeStep, s=nint(dt), rc=rc) 
+    call ESMF_TimeIntervalSet(stabilityTimeStep, s=dt_atmos, rc=rc) 
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -624,6 +642,7 @@ module DAtm
     call ESMF_ClockPrint(clock, options="currTime", &
          preString="CheckImport with CLOCK current:   ", &
          unit=msgString)
+    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
     call ESMF_ClockPrint(clock, options="startTime", &
          preString="CheckImport with CLOCK start:   ", &
          unit=msgString)

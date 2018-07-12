@@ -33,7 +33,9 @@ module AtmFields
   character(len=ESMF_MAXSTR), public :: gridfile = &
        'gdas.t18z.sfcf.2018041400.nc'
 #endif
+
   integer, public :: lPet
+  integer, public :: dt_atmos
 
   ! grid associated stagger_center lats,lons,mask
   ! coords are defined 2dim here, which makes writing with ESMF_ArrayWrite easy
