@@ -138,9 +138,10 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
    cwmrg = 0.0
   dpresg = 0.0
    presg = 0.0
-!#ifndef skip3dread
+
   has_dpres = .true.
   call nemsio_readrecv(gfile,'dpres','mid layer',k,nems_wrk,iret=iret)
+  print *,' iret = ',iret
   if (iret/=0) then
       rd = 287.05; cp = 1004.6
       kap = rd/cp
@@ -242,8 +243,9 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
      endif
      call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
      cwmrg(:,:,k) = nems_wrk2
+
   enddo
-!#endif
+
   call nemsio_close(gfile, iret=iret)
 end subroutine read_nemsio_griddata
 

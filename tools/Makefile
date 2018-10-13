@@ -4,14 +4,14 @@ NEMSIO=$(NWPROD)/nemsio/v2.2.3
 #####################################################################
 # compiler options
 #####################################################################
-FOPT = -O
-#FOPT = -C
+#FOPT = -O
+FOPT = -C
 
 F90 = ifort
 #F90 = gfortran -O3 
 #FOPT = -march=native -fPIC -fconvert=big-endian 
 
-#opt1 = -Dskip3dread
+#opt1 = -Ddebug
 
 optall = $(opt1) $(opt2)
 
@@ -19,7 +19,7 @@ optall = $(opt1) $(opt2)
 # 
 #####################################################################
 
-OBJS = param.o GFS_diagnostics.o caldata.o kinds.o charstrings.o cdf.o sigmavars.o \
+OBJS = param.o GFS_diagnostics.o kinds.o charstrings.o cdf.o sigmavars.o \
 sfcvars.o gfstonc_sfc.o gfstonc_sig.o rdnemsio.o sigma2nc.o sfc2nc.o \
  write_sigmacdf.o write_sfccdf.o tm_secs_from_bc.o
 
@@ -29,7 +29,7 @@ nemsio2nc: $(OBJS)
 
 %.o: %.F90
 	$(F90) $(FOPT) $(optall) -c -I$(CDF)/include -I$(NEMSIO)/include $<
-	cpp $(optall) -I$(CDF)/include $*.F90>$*.i
+#cpp $(optall) -I$(CDF)/include $*.F90>$*.i
 
 clean:
 	/bin/rm -f nemsio2nc *.o *.i *.mod

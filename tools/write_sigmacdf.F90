@@ -1,5 +1,5 @@
 subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim, jdim, kdim, lstep)
-
+#ifdef debug
   use kinds
   use charstrings
   use cdf
@@ -24,7 +24,6 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
 
   if(lstep .eq. 1)then
    rc = nf90_create(trim(cdffile), nf90_clobber, ncid)
-   print *,trim(nf90_strerror(rc))
 
    rc = nf90_def_dim(ncid,    'Xt',          idim,     xtdim)
    rc = nf90_def_dim(ncid,    'Yt',          jdim,     ytdim)
@@ -72,6 +71,7 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
     rc = nf90_put_att(ncid, datid,       'long_name',  vlong)
   endif
    rc = nf90_enddef(ncid)
+   if(rc .ne. 0)print *,trim(nf90_strerror(rc))
 
    rc = nf90_put_var(ncid,  xtid,   lons)
    rc = nf90_put_var(ncid,  ytid,   lats)
@@ -81,7 +81,6 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
 
   !-----------------------------------------------------------------------------
 
-  if(lstep .ge. 1)then
    rc = nf90_open(trim(cdffile), nf90_write, ncid)
 
    corner1(1) = lstep
@@ -112,6 +111,5 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
     rc = nf90_put_var(ncid, datid, sig2d, corner3, edge3)
    endif
     rc = nf90_close(ncid)
-  endif
-
+#endif
 end subroutine write_sigmacdf

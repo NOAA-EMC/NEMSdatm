@@ -19,7 +19,7 @@ module cdf
   real(kind=4) :: mval = -9999.
 
   real(kind=8)                  :: tstamp, tstamp0
-  character(len=31)             :: torg = 'hours since 1991-01-01 00:00:00'
+  character(len=31)             :: torg = 'hours since 1971-01-01 00:00:00'
   character(len=31)             :: tcal = 'gregorian'
 
   contains
@@ -36,7 +36,7 @@ module cdf
 
   tday = tm_secs_from_bc(ytmp, mtmp, dtmp,  &
                          htmp, mint, stmp) - &
-         tm_secs_from_bc(1991,   1,    1,   &
+         tm_secs_from_bc(1971,   1,    1,   &
                             0,   0,    0)
     tday = tday/(60.d0*60.d0)
   tstamp = tday

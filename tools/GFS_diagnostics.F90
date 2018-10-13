@@ -1,5 +1,7 @@
 module GFS_diagnostics
 
+  implicit none
+
   !--- data type definition for use with GFDL FMS diagnostic manager until write component is working
   type GFS_externaldiag_type
     integer :: id
@@ -13,6 +15,8 @@ module GFS_diagnostics
     !character(len=64)    :: mask
     !character(len=64)    :: intpl_method
     !real(kind=kind_phys) :: cnvfac
+    !for setting 'required for data atmosphere'
+    logical              :: req4datm
    end type GFS_externaldiag_type
 
   !--- public data type ---
@@ -21,8 +25,6 @@ module GFS_diagnostics
   !--- public interfaces ---
   public  GFS_externaldiag_populate
 
-  integer, parameter :: maxfields = 200
-  type(GFS_externaldiag_type), public :: GFSsfc(maxfields)
   CONTAINS
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -96,6 +98,8 @@ module GFS_diagnostics
     !ExtDiag(:)%mask = ''
     ExtDiag(:)%name = ''
     !ExtDiag(:)%intpl_method = 'nearest_stod'
+    !default
+    ExtDiag(:)%req4datm = .false.
 
     idx = 0 
 
@@ -118,6 +122,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'DLWRF'
     ExtDiag(idx)%desc = 'surface downward longwave flux'
     ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_one
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -145,6 +150,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'ULWRF'
     ExtDiag(idx)%desc = 'surface upward longwave flux'
     ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_one
     !!ExtDiag(idx)%time_avg = .TRUE.
@@ -171,6 +177,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'DSWRF'
     ExtDiag(idx)%desc = 'averaged surface downward shortwave flux'
     ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_one
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -253,6 +260,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'vbdsf_ave'
     ExtDiag(idx)%desc = 'Visible Beam Downward Solar Flux'
     ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%time_avg = .TRUE.
     !ExtDiag(idx)%time_avg_kind = 'rad_sw'
@@ -267,6 +275,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'vddsf_ave'
     ExtDiag(idx)%desc = 'Visible Diffuse Downward Solar Flux'
     ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%time_avg = .TRUE.
     !ExtDiag(idx)%time_avg_kind = 'rad_sw'
@@ -281,6 +290,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'nbdsf_ave'
     ExtDiag(idx)%desc = 'Near IR Beam Downward Solar Flux'
     ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%time_avg = .TRUE.
     !ExtDiag(idx)%time_avg_kind = 'rad_sw'
@@ -295,6 +305,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'nddsf_ave'
     ExtDiag(idx)%desc = 'Near IR Diffuse Downward Solar Flux'
     ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%time_avg = .TRUE.
     !ExtDiag(idx)%time_avg_kind = 'rad_sw'
@@ -684,19 +695,19 @@ module GFS_diagnostics
 
 !
 !--- accumulated diagnostics ---
-    do num = 1,NFXR
-      write (xtra,'(I2.2)') num 
-      idx = idx + 1
+    !do num = 1,NFXR
+      !write (xtra,'(I2.2)') num 
+      !idx = idx + 1
       !ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'fluxr_'//trim(xtra)
-      ExtDiag(idx)%desc = 'fluxr diagnostic '//trim(xtra)//' - GFS radiation'
-      ExtDiag(idx)%unit = 'XXX'
+      !ExtDiag(idx)%name = 'fluxr_'//trim(xtra)
+      !ExtDiag(idx)%desc = 'fluxr diagnostic '//trim(xtra)//' - GFS radiation'
+      !ExtDiag(idx)%unit = 'XXX'
       !ExtDiag(idx)%mod_name = 'gfs_phys'
       !allocate (ExtDiag(idx)%data(nblks))
       !do nb = 1,nblks
       !  ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%fluxr(:,num)
       !enddo
-    enddo
+    !enddo
 
 !--- the next two appear to be appear to be coupling fields in gloopr
 !--- each has four elements
@@ -921,6 +932,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'dusfc'
     ExtDiag(idx)%desc = 'surface zonal momentum flux'
     ExtDiag(idx)%unit = 'N/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_one
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -935,6 +947,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'dvsfc'
     ExtDiag(idx)%desc = 'surface meridional momentum flux'
     ExtDiag(idx)%unit = 'N/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_one
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -949,6 +962,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'shtfl_ave'
     ExtDiag(idx)%desc = 'surface sensible heat flux'
     ExtDiag(idx)%unit = 'w/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_one
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -963,6 +977,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'lhtfl_ave'
     ExtDiag(idx)%desc = 'surface latent heat flux'
     ExtDiag(idx)%unit = 'w/m**2'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_one
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -977,6 +992,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'totprcp_ave'
     ExtDiag(idx)%desc = 'surface precipitation rate'
     ExtDiag(idx)%unit = 'kg/m**2/s'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_th
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -1121,6 +1137,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'psmean'
     ExtDiag(idx)%desc = 'surface pressure'
     ExtDiag(idx)%unit = 'kPa'
+    ExtDiag(idx)%req4datm = .false.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%intpl_method = 'bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -1233,6 +1250,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'rain'
     ExtDiag(idx)%desc = 'total rain at this time step'
     ExtDiag(idx)%unit = 'XXX'
+    ExtDiag(idx)%req4datm = .false.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -1266,6 +1284,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'snow'
     ExtDiag(idx)%desc = 'snow fall at this time step'
     ExtDiag(idx)%unit = 'XXX'
+    ExtDiag(idx)%req4datm = .false.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -1315,6 +1334,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'totsnw_ave'
     ExtDiag(idx)%desc = 'surface snow precipitation rate'
     ExtDiag(idx)%unit = 'kg/m**2/s'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_th
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -1372,6 +1392,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'u10m'
     ExtDiag(idx)%desc = '10 meter u wind'
     ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%intpl_method = 'vector_bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -1384,6 +1405,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'v10m'
     ExtDiag(idx)%desc = '10 meter v wind'
     ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%intpl_method = 'vector_bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -1408,6 +1430,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'hgt_hyblev1'
     ExtDiag(idx)%desc = 'layer 1 height'
     ExtDiag(idx)%unit = 'm'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -1419,6 +1442,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'psurf'
     ExtDiag(idx)%desc = 'surface pressure'
     ExtDiag(idx)%unit = 'Pa'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mask = 'pseudo_ps'
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%intpl_method = 'bilinear'
@@ -1456,6 +1480,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'tmp_hyblev1'
     ExtDiag(idx)%desc = 'layer 1 temperature'
     ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%intpl_method = 'bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -1468,6 +1493,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'spfh_hyblev1'
     ExtDiag(idx)%desc = 'layer 1 specific humidity'
     ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%intpl_method = 'bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -1480,6 +1506,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'ugrd_hyblev1'
     ExtDiag(idx)%desc = 'layer 1 zonal wind'
     ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%intpl_method = 'vector_bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -1492,6 +1519,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'vgrd_hyblev1'
     ExtDiag(idx)%desc = 'layer 1 meridional wind'
     ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%intpl_method = 'vector_bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -2007,6 +2035,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'fice'
     ExtDiag(idx)%desc = 'surface ice concentration (ice=1; no ice=0)'
     ExtDiag(idx)%unit = 'fraction'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -2097,6 +2126,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'q2m'
     ExtDiag(idx)%desc = '2m specific humidity'
     ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !ExtDiag(idx)%intpl_method = 'bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -2109,6 +2139,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 't2m'
     ExtDiag(idx)%desc = '2m temperature'
     ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !ExtDiag(idx)%intpl_method = 'bilinear'
     !allocate (ExtDiag(idx)%data(nblks))
@@ -2121,6 +2152,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'tsfc'
     ExtDiag(idx)%desc = 'surface temperature'
     ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -2143,6 +2175,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'tisfc'
     ExtDiag(idx)%desc = 'surface temperature over ice fraction'
     ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -2154,6 +2187,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'tprcp'
     ExtDiag(idx)%desc = 'total precipitation'
     ExtDiag(idx)%unit = 'kg/m**2'
+    ExtDiag(idx)%req4datm = .false.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -2199,6 +2233,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'slmsksfc'
     ExtDiag(idx)%desc = 'sea-land-ice mask (0-sea, 1-land, 2-ice)'
     ExtDiag(idx)%unit = 'numerical'
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks

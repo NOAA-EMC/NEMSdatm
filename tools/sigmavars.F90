@@ -4,99 +4,95 @@ module sigmavars
 
   implicit none
 
-  integer, parameter :: nsigvars =  8 & !3-d
-                                 +  2   !2-d
+  integer, parameter :: maxsigvars = 20
 
   real(kind=nemsio_realkind), allocatable, dimension(:,:,:) :: vcoord
 
   real(kind=nemsio_realkind), allocatable, dimension(:,:,:) :: ug,vg,tempg,qg,ozg,cwmrg,dpresg,presg
   real(kind=nemsio_realkind), allocatable, dimension(:,:)   :: psg,zsg
 
-  real(kind=4), allocatable, dimension(:,:)     :: sig2d
   real(kind=4), allocatable, dimension(:,:,:)   :: sig3d
 
   type SigmaFieldsDefs
     character(len=12)                           :: varname
     character(len=12)                           :: varunit
     character(len=60)                           :: varlong
-    logical                                     :: output
-    logical                                     :: var3d
   end type SigmaFieldsDefs
 
-  type(SigmaFieldsDefs) :: sgfields(nsigvars)
-
-  ! number of vertical levels to output
+  type(SigmaFieldsDefs) :: sgfields(maxsigvars)
+#ifdef debug
+  ! number of vertical levels to output for debugging
   integer, parameter            :: kout = 10
   real(kind=4), dimension(kout) :: zout
-
+#endif
   contains 
 
   subroutine sigmafield_setup
 
+  use param
+
   ! see gfs_nemsiotonc_3d in j.whitaker's python version
   ! checked with Jun Wang and confirmed that FV3 is actual temperature, not 
   ! virtual temperature as listed in j.whitaker's python version
-  integer :: ii = 0
+  integer :: idx = 0
 
-  !default is to not output the variable
-  sgfields(:)%output       = .false.
-  !default is 3d-variable
-  sgfields(:)%var3d        = .true.
+  !default
+  sgfields(:)%varname = " "
+  sgfields(:)%varunit = " "
+  sgfields(:)%varlong = " "
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'ps'
-  sgfields(ii)%varunit     = 'Pa'
-  sgfields(ii)%varlong     = 'surface pressure'
-  sgfields(ii)%output      = .true.
-  sgfields(ii)%var3d       = .false.
+  idx = idx + 1
+  sgfields(idx)%varname     = 'ps'
+  sgfields(idx)%varunit     = 'Pa'
+  sgfields(idx)%varlong     = 'surface pressure'
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'zs'
-  sgfields(ii)%varunit     = 'm'
-  sgfields(ii)%varlong     = 'surface orography'
-  sgfields(ii)%var3d       = .false.
+  idx = idx + 1
+  sgfields(idx)%varname     = 'zs'
+  sgfields(idx)%varunit     = 'm'
+  sgfields(idx)%varlong     = 'surface orography'
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'dpres'
-  sgfields(ii)%varunit     = 'Pa'
-  sgfields(ii)%varlong     = 'pressure thickness of layer'
+  idx = idx + 1
+  sgfields(idx)%varname     = 'dpres'
+  sgfields(idx)%varunit     = 'Pa'
+  sgfields(idx)%varlong     = 'pressure thickness of layer'
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'pres'
-  sgfields(ii)%varunit     = 'Pa'
-  sgfields(ii)%varlong     = 'layer pressure'
+  idx = idx + 1
+  sgfields(idx)%varname     = 'pres'
+  sgfields(idx)%varunit     = 'Pa'
+  sgfields(idx)%varlong     = 'layer pressure'
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'ugrd'
-  sgfields(ii)%varunit     = 'm/s'
-  sgfields(ii)%varlong     = 'zonal wind'
+  idx = idx + 1
+  sgfields(idx)%varname     = 'ugrd'
+  sgfields(idx)%varunit     = 'm/s'
+  sgfields(idx)%varlong     = 'zonal wind'
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'vgrd'
-  sgfields(ii)%varunit     = 'm/s'
-  sgfields(ii)%varlong     = 'meridional wind'
+  idx = idx + 1
+  sgfields(idx)%varname     = 'vgrd'
+  sgfields(idx)%varunit     = 'm/s'
+  sgfields(idx)%varlong     = 'meridional wind'
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'temp'
-  sgfields(ii)%varunit     = 'deg K'
-  sgfields(ii)%varlong     = 'temperature' 
+  idx = idx + 1
+  sgfields(idx)%varname     = 'temp'
+  sgfields(idx)%varunit     = 'deg K'
+  sgfields(idx)%varlong     = 'temperature' 
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'spfh'
-  sgfields(ii)%varunit     = 'kg/kg'
-  sgfields(ii)%varlong     = 'specific humidity' 
+  idx = idx + 1
+  sgfields(idx)%varname     = 'spfh'
+  sgfields(idx)%varunit     = 'kg/kg'
+  sgfields(idx)%varlong     = 'specific humidity' 
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'o3mr'
-  sgfields(ii)%varunit     = 'kg/kg'
-  sgfields(ii)%varlong     = 'ozone mass mixing ratio' 
+  idx = idx + 1
+  sgfields(idx)%varname     = 'o3mr'
+  sgfields(idx)%varunit     = 'kg/kg'
+  sgfields(idx)%varlong     = 'ozone mass mixing ratio' 
 
-  ii = ii + 1
-  sgfields(ii)%varname     = 'cwmr'
-  sgfields(ii)%varunit     = 'kg/kg'
-  sgfields(ii)%varlong     = 'total cloud condensate mixing ratio' 
+  idx = idx + 1
+  sgfields(idx)%varname     = 'cwmr'
+  sgfields(idx)%varunit     = 'kg/kg'
+  sgfields(idx)%varlong     = 'total cloud condensate mixing ratio' 
 
-  if(ii .ne. nsigvars)stop
+  nsigvars = idx
+  if(idx .gt. maxsigvars)stop
 
   end subroutine sigmafield_setup
 
@@ -115,8 +111,9 @@ module sigmavars
     allocate(   psg(1:im,1:jm))
     allocate(   zsg(1:im,1:jm))
 
-    allocate(  sig2d(1:im,1:jm))
+#ifdef debug
     allocate(  sig3d(1:im,1:jm,1:kout))
+#endif
 
   end subroutine alloc_sigma
 
@@ -132,8 +129,10 @@ module sigmavars
     deallocate( presg)
     deallocate(   psg)
     deallocate(   zsg)
+
+#ifdef debug
     deallocate( sig3d)
-    deallocate( sig2d)
+#endif
 
   end subroutine dealloc_sigma
 end module sigmavars

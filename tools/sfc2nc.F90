@@ -1,4 +1,4 @@
-subroutine sfc2nc(fname,lstep)
+subroutine sfc2nc(fname,cstring)
  
   use param
   use nemsio_module
@@ -10,8 +10,7 @@ subroutine sfc2nc(fname,lstep)
 
   implicit none
 
-  character(len=*), intent(in) :: fname
-           integer, intent(in) :: lstep
+  character(len=*), intent(in) :: fname,cstring
 
 !---------------------------------------------------------------------
 ! local variables
@@ -20,6 +19,7 @@ subroutine sfc2nc(fname,lstep)
   integer :: nr
 
   character(len= 32) :: vname, vlong, vunit
+             logical :: vout
   character(len=200) :: cdffile
 
   !---------------------------------------------------------------------
@@ -29,7 +29,7 @@ subroutine sfc2nc(fname,lstep)
   do nr = 1,nrecs
      vname = trim(varnames(nr))
      vlong = trim( varlong(nr))
-
+#ifdef test
    ! there are 2 fields with name 'tmp'
    if((trim(vname) .eq. 'tmp') .and. &
        (trim(vlong) .eq. '2 m above gnd'))then
@@ -38,8 +38,8 @@ subroutine sfc2nc(fname,lstep)
   ! a2d(:,:) = grd2d(:,:,nr) - 273.15
       vunit = 'K'
    a2d(:,:) = grd2d(:,:,nr) 
-    cdffile = trim(rtsrc)//trim(rtname)//'atmoutnc/'//trim(vname)//'.nc'
-    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,lstep)
+    cdffile = trim(rtsrc)//trim(rtname)//trim(vname)//'.nc'
+    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,1)
    endif
 
    if((trim(vname) .eq. 'spfh') .and. &
@@ -49,8 +49,8 @@ subroutine sfc2nc(fname,lstep)
    !a2d(:,:) = grd2d(:,:,nr)*1.0e3
       vunit = 'kg/kg'
    a2d(:,:) = grd2d(:,:,nr)
-    cdffile = trim(rtsrc)//trim(rtname)//'atmoutnc/'//trim(vname)//'.nc'
-    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,lstep)
+    cdffile = trim(rtsrc)//trim(rtname)//trim(vname)//'.nc'
+    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,1)
    endif
 
    if(trim(vname) .eq. 'tisfc')then 
@@ -59,32 +59,32 @@ subroutine sfc2nc(fname,lstep)
    !a2d(:,:) = grd2d(:,:,nr) - 273.15
       vunit = 'K'
    a2d(:,:) = grd2d(:,:,nr) 
-    cdffile = trim(rtsrc)//trim(rtname)//'atmoutnc/'//trim(vname)//'.nc'
-    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,lstep)
+    cdffile = trim(rtsrc)//trim(rtname)//trim(vname)//'.nc'
+    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,1)
    endif
 
    if(trim(vname) .eq. 'icec')then
       vunit = ' '
       vlong = 'ice concentration'
    a2d(:,:) = grd2d(:,:,nr) 
-    cdffile = trim(rtsrc)//trim(rtname)//'atmoutnc/'//trim(vname)//'.nc'
-    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,lstep)
+    cdffile = trim(rtsrc)//trim(rtname)//trim(vname)//'.nc'
+    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,1)
    endif
 
    if(trim(vname) .eq. 'land')then
       vunit = ' '
       vlong = '0 (ocean); 1 (land); 2 (ice)'
    a2d(:,:) = grd2d(:,:,nr)
-    cdffile = trim(rtsrc)//trim(rtname)//'atmoutnc/'//trim(vname)//'.nc'
-    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,lstep)
+    cdffile = trim(rtsrc)//trim(rtname)//trim(vname)//'.nc'
+    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,1)
    endif
 
    if(trim(vname) .eq. 'salbd')then
       vunit = ' '
       vlong = 'ratio net sw/down ?'
    a2d(:,:) = grd2d(:,:,nr)
-    cdffile = trim(rtsrc)//trim(rtname)//'atmoutnc/'//trim(vname)//'.nc'
-    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,lstep)
+    cdffile = trim(rtsrc)//trim(rtname)//trim(vname)//'.nc'
+    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,1)
    endif
 
    if((trim(vname) .eq. 'tmp') .and. &
@@ -94,15 +94,10 @@ subroutine sfc2nc(fname,lstep)
    !a2d(:,:) = grd2d(:,:,nr) - 273.15
       vunit = 'K'
    a2d(:,:) = grd2d(:,:,nr)
-    cdffile = trim(rtsrc)//trim(rtname)//'atmoutnc/'//trim(vname)//'.nc'
-    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,lstep)
+    cdffile = trim(rtsrc)//trim(rtname)//trim(vname)//'.nc'
+    call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,1)
    endif
-
-   !if(trim(vlong) .ne. 'soil layer')then
-   !a2d(:,:) = grd2d(:,:,nr)
-   ! cdffile = trim(rtsrc)//trim(rtname)//'atmoutnc/'//trim(vname)//'.nc'
-   ! call write_sfccdf(trim(cdffile),vname,vunit,vlong,a2d,im,jm,lstep)
-   !endif
+#endif
 
   enddo
 
