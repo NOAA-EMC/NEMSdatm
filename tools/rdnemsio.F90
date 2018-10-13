@@ -2,6 +2,7 @@ program rdnemsio
 
   use param
   use caldata
+  use GFS_diagnostics
   use nemsio_module
   use gfstonc_sfc
   use gfstonc_sig
@@ -19,6 +20,8 @@ program rdnemsio
   integer :: k,nr,ny, nm, nd, year, fhr, ll, lll
   integer :: mnend(nmon)
   integer :: nfhour
+  integer :: ii,idxtotal
+
   integer, dimension(7) :: idate
 
   character(len= 6) :: cdate
@@ -45,6 +48,14 @@ program rdnemsio
 
    !print *,'initial files to use sigf,sfcf ',trim(cfhr)
   !---------------------------------------------------------------------
+  
+   call GFS_externaldiag_populate(GFSsfc,idxtotal)
+
+   print *,idxtotal
+   do ii = 1,idxtotal
+     print '(i6,a14,a5,a60)',ii,trim(GFSsfc(ii)%name),'     ',trim(GFSsfc(ii)%desc)
+   enddo
+  !---------------------------------------------------------------------
 
   call sigmafield_setup
 
@@ -57,7 +68,7 @@ program rdnemsio
   call read_nemsio_header_sfc(trim(sfcfile),im,jm,nrecs,idate,nfhour)
 
   print '(a,3i6)','im,jm,nrecs = ',im,jm,nrecs
-  !print '(a,a,7i6,a,i6)',trim(sfcfile),' idate = ',idate,' nfhour ',nfhour
+  print '(a,a,7i6,a,i6)',trim(sfcfile),' idate = ',idate,' nfhour ',nfhour
 
   allocate(lons(1:im))
   allocate(lats(1:jm))
@@ -78,7 +89,7 @@ program rdnemsio
    call arrtostr(inames(nr,:),varnames(nr),32)
    call arrtostr(itypes(nr,:), varlong(nr),32)
 
-   print *,trim(varnames(nr)),' ',trim(varlong(nr))
+   print '(i6,a10,a20,a12,a20)',nr,'varname = ',trim(varnames(nr)),' long_name ',trim(varlong(nr))
    !print *,trim(varnames(nr)),' ',trim(varlong(nr)),minval(grd2d(:,:,nr)),maxval(grd2d(:,:,nr))
   enddo
 
@@ -106,7 +117,7 @@ program rdnemsio
   do k = 1,kout
    zout(k) = vcoord(k,2,1)
   enddo
-
+#ifdef test
   !---------------------------------------------------------------------
   !
   !---------------------------------------------------------------------
@@ -151,6 +162,7 @@ program rdnemsio
    enddo !ny
 #endif
 
+#endif
   call dealloc_sigma
   deallocate(lons)
   deallocate(lats)
