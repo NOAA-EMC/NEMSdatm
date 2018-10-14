@@ -5,13 +5,13 @@ NEMSIO=$(NWPROD)/nemsio/v2.2.3
 # compiler options
 #####################################################################
 #FOPT = -O
-FOPT = -C
+#FOPT = -C
 
 F90 = ifort
 #F90 = gfortran -O3 
 #FOPT = -march=native -fPIC -fconvert=big-endian 
 
-#opt1 = -Ddebug
+opt1 = -Ddebug
 
 optall = $(opt1) $(opt2)
 

@@ -1,5 +1,7 @@
 module gfstonc_sig
 
+ implicit none
+
  contains
 
 ! theia:
@@ -84,14 +86,14 @@ subroutine read_nemsio_coords(filename, nlons, nlats, nlevs, vcoord, lats, lons)
    call nemsio_close(gfile, iret=iret)
 end subroutine read_nemsio_coords
 
-subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zsg, psg, qg, ozg, cwmrg, dpresg, presg)
+subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zsg, psg, qg, ozg, cwmrg, dpresg, presg, delzg)
   use kinds, only: r_kind
   use nemsio_module, only: nemsio_gfile,nemsio_open,nemsio_close,&
                            nemsio_getheadvar,nemsio_realkind,&
                            nemsio_readrecv,nemsio_init,nemsio_getfilehead
   integer, intent(in) :: nlons,nlats,nlevs
   real(r_kind), intent(out),dimension(nlons,nlats,nlevs) :: &
-  ug,vg,tempg,qg,ozg,cwmrg,dpresg,presg
+  ug,vg,tempg,qg,ozg,cwmrg,dpresg,presg,delzg
   real(r_kind), intent(out), dimension(nlons,nlats) :: psg,zsg
   real(nemsio_realkind) nems_vcoord(nlevs+1,3,2),ak(nlevs+1),bk(nlevs+1)
   real(r_kind), dimension(nlons,nlats) :: press_bot, press_top
@@ -102,6 +104,9 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
   type(nemsio_gfile) :: gfile
   integer iret, idvc
   logical has_dpres
+  integer :: k
+  real(nemsio_realkind) :: zero = 0.0
+
   call nemsio_init(iret=iret)
   if(iret/=0) then
      write(6,*)'problem with nemsio_init, iret=',iret
@@ -138,10 +143,12 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
    cwmrg = 0.0
   dpresg = 0.0
    presg = 0.0
+   delzg = 0.0
 
+  k = 1
   has_dpres = .true.
   call nemsio_readrecv(gfile,'dpres','mid layer',k,nems_wrk,iret=iret)
-  print *,' iret = ',iret
+  print *,'dpres iret = ',iret
   if (iret/=0) then
       rd = 287.05; cp = 1004.6
       kap = rd/cp
@@ -176,10 +183,8 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
       do k=2,nlevs+1
          press_top = ak(k)+bk(k)*psg
          dpresg(:,:,k-1) = press_bot - press_top
-         !print *,k-1,minval(dpresg(:,:,k-1)),maxval(dpresg(:,:,k-1))
          presg(:,:,k-1) = ((press_bot**kap1-press_top**kap1)/&
                           (kap1*(press_bot-press_top)))**kapr
-         !print *,k-1,minval(presg(:,:,k-1)),maxval(presg(:,:,k-1))
          press_bot = press_top
       enddo
   endif
@@ -193,28 +198,38 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
          endif
          call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
          dpresg(:,:,k) = nems_wrk2
-         call nemsio_readrecv(gfile,'pres','mid layer',k,nems_wrk,iret=iret)
-         if (iret/=0) then
-             write(6,*)'problem with nemsio_readrecv(pres), iret=',iret
-             stop
-         endif
-         call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
-         presg(:,:,k) = nems_wrk2
+         !call nemsio_readrecv(gfile,'pres','mid layer',k,nems_wrk,iret=iret)
+         !if (iret/=0) then
+         !    write(6,*)'problem with nemsio_readrecv(pres), iret=',iret
+         !    stop
+         !endif
+         !call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
+         !presg(:,:,k) = nems_wrk2
      endif
-     call nemsio_readrecv(gfile,'ugrd','mid layer',k,nems_wrk,iret=iret)
+
+     call nemsio_readrecv(gfile,'delz','mid layer',k,nems_wrk,iret=iret)
      if (iret/=0) then
-         write(6,*)'problem with nemsio_readrecv(ugrd), iret=',iret
+         write(6,*)'problem with nemsio_readrecv(delz), iret=',iret
          stop
      endif
      call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
-     ug(:,:,k) = nems_wrk2
-     call nemsio_readrecv(gfile,'vgrd','mid layer',k,nems_wrk,iret=iret)
-     if (iret/=0) then
-         write(6,*)'problem with nemsio_readrecv(vgrd), iret=',iret
-         stop
-     endif
-     call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
-     vg(:,:,k) = nems_wrk2
+     delzg(:,:,k) = nems_wrk2
+
+     !call nemsio_readrecv(gfile,'ugrd','mid layer',k,nems_wrk,iret=iret)
+     !if (iret/=0) then
+     !    write(6,*)'problem with nemsio_readrecv(ugrd), iret=',iret
+     !    stop
+     !endif
+     !call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
+     !ug(:,:,k) = nems_wrk2
+     !call nemsio_readrecv(gfile,'vgrd','mid layer',k,nems_wrk,iret=iret)
+     !if (iret/=0) then
+     !    write(6,*)'problem with nemsio_readrecv(vgrd), iret=',iret
+     !    stop
+     !endif
+     !call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
+     !vg(:,:,k) = nems_wrk2
+
      call nemsio_readrecv(gfile,'tmp','mid layer',k,nems_wrk,iret=iret)
      if (iret/=0) then
         write(6,*)'problem with nemsio_readrecv(tmp), iret=',iret
@@ -222,6 +237,7 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
      endif
      call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
      tempg(:,:,k) = nems_wrk2
+
      call nemsio_readrecv(gfile,'spfh','mid layer',k,nems_wrk,iret=iret)
      if (iret/=0) then
         write(6,*)'problem with nemsio_readrecv(spfh), iret=',iret
@@ -229,24 +245,26 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
      endif
      call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
      qg(:,:,k) = nems_wrk2
-     call nemsio_readrecv(gfile,'o3mr','mid layer',k,nems_wrk,iret=iret)
-     if (iret/=0) then
-        write(6,*)'problem with nemsio_readrecv(o3mr), iret=',iret
-        stop
-     endif
-     call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
-     ozg(:,:,k) = nems_wrk2
-     call nemsio_readrecv(gfile,'clwmr','mid layer',k,nems_wrk,iret=iret)
-     if (iret/=0) then
-        write(6,*)'problem with nemsio_readrecv(clwmr), iret=',iret
-        stop
-     endif
-     call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
-     cwmrg(:,:,k) = nems_wrk2
+
+     !call nemsio_readrecv(gfile,'o3mr','mid layer',k,nems_wrk,iret=iret)
+     !if (iret/=0) then
+     !   write(6,*)'problem with nemsio_readrecv(o3mr), iret=',iret
+     !   stop
+     !endif
+     !call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
+     !ozg(:,:,k) = nems_wrk2
+     !call nemsio_readrecv(gfile,'clwmr','mid layer',k,nems_wrk,iret=iret)
+     !if (iret/=0) then
+     !   write(6,*)'problem with nemsio_readrecv(clwmr), iret=',iret
+     !   stop
+     !endif
+     !call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
+     !cwmrg(:,:,k) = nems_wrk2
 
   enddo
 
   call nemsio_close(gfile, iret=iret)
+  print *,'closed nemsio ',iret
 end subroutine read_nemsio_griddata
 
 subroutine onedtotwod(data1,data2,nlons,nlats)

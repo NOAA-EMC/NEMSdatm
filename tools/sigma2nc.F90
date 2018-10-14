@@ -21,17 +21,18 @@ subroutine sigma2nc(fname,cstring)
    character(len=12) :: vname
    character(len=12) :: vunit
    character(len=60) :: vlong
+             logical :: v3d
 
   character(len=200) :: cdffile
 
   !---------------------------------------------------------------------
 
   call read_nemsio_griddata(trim(fname), im, jm, nlevs, ug, vg, &
-                            tempg, zsg, psg, qg, ozg, cwmrg, dpresg, presg)
+                            tempg, zsg, psg, qg, ozg, cwmrg, dpresg, presg, delzg)
 
   do k = 1,nlevs
-   print *,k,presg(im/2,jm/2,k)
-  !print *,minval(presg(:,:,k)),maxval(presg(:,:,k))
+  ! print *,k,dpresg(im/2,jm/2,k)
+  ! print *,minval(presg(:,:,k)),maxval(presg(:,:,k))
   enddo
 
   !---------------------------------------------------------------------
@@ -40,25 +41,35 @@ subroutine sigma2nc(fname,cstring)
      vname = trim(sgfields(nv)%varname)
      vunit = trim(sgfields(nv)%varunit)
      vlong = trim(sgfields(nv)%varlong)
+       v3d =      sgfields(nv)%var3d
    cdffile = trim(rtsrc)//trim(rtname)//trim(sgfields(nv)%varname)//'.nc'
-   sig3d = 0.0
+   sig3d = 0.0; sig2d = 0.0
 
+   if(trim(vname) .eq.    'ps')then
+     sig2d(:,:) =   psg(:,:)
+     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,v3d,sig2d,sig3d,im,jm,kout,1)
+   endif
    if(trim(vname) .eq.  'temp')then
      sig3d(:,:,1:kout) =   tempg(:,:,1:kout)
-     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,sig3d,im,jm,kout,1)
+     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,v3d,sig2d,sig3d,im,jm,kout,1)
    endif
-   if(trim(vname) .eq.  'pres')then
-     sig3d(:,:,1:kout) =   presg(:,:,1:kout)
-     !call write_sigmacdf(trim(cdffile),vname,vunit,vlong,sig3d,im,jm,kout,1)
-   endif
+   !if(trim(vname) .eq.  'pres')then
+   !  sig3d(:,:,1:kout) =   presg(:,:,1:kout)
+   !  call write_sigmacdf(trim(cdffile),vname,vunit,vlong,sig3d,im,jm,kout,1)
+   !endif
    if(trim(vname) .eq.  'spfh')then
      sig3d(:,:,1:kout) =      qg(:,:,1:kout)
-     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,sig3d,im,jm,kout,1)
+     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,v3d,sig2d,sig3d,im,jm,kout,1)
    endif
    if(trim(vname) .eq.  'dpres')then
      sig3d(:,:,1:kout) =  dpresg(:,:,1:kout)
-     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,sig3d,im,jm,kout,1)
+     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,v3d,sig2d,sig3d,im,jm,kout,1)
    endif
+   if(trim(vname) .eq.   'delz')then
+     sig3d(:,:,1:kout) =  delzg(:,:,1:kout)
+     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,v3d,sig2d,sig3d,im,jm,kout,1)
+   endif
+
   enddo
 #endif
 

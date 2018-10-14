@@ -9,14 +9,17 @@ module sigmavars
   real(kind=nemsio_realkind), allocatable, dimension(:,:,:) :: vcoord
 
   real(kind=nemsio_realkind), allocatable, dimension(:,:,:) :: ug,vg,tempg,qg,ozg,cwmrg,dpresg,presg
+  real(kind=nemsio_realkind), allocatable, dimension(:,:,:) :: delzg
   real(kind=nemsio_realkind), allocatable, dimension(:,:)   :: psg,zsg
 
+  real(kind=4), allocatable, dimension(:,:)     :: sig2d
   real(kind=4), allocatable, dimension(:,:,:)   :: sig3d
 
   type SigmaFieldsDefs
     character(len=12)                           :: varname
     character(len=12)                           :: varunit
     character(len=60)                           :: varlong
+    logical                                     :: var3d
   end type SigmaFieldsDefs
 
   type(SigmaFieldsDefs) :: sgfields(maxsigvars)
@@ -40,11 +43,14 @@ module sigmavars
   sgfields(:)%varname = " "
   sgfields(:)%varunit = " "
   sgfields(:)%varlong = " "
+  !default is 3d-variable
+  sgfields(:)%var3d         = .true.
 
   idx = idx + 1
   sgfields(idx)%varname     = 'ps'
   sgfields(idx)%varunit     = 'Pa'
   sgfields(idx)%varlong     = 'surface pressure'
+  sgfields(idx)%var3d       = .false.
 
   idx = idx + 1
   sgfields(idx)%varname     = 'zs'
@@ -91,6 +97,11 @@ module sigmavars
   sgfields(idx)%varunit     = 'kg/kg'
   sgfields(idx)%varlong     = 'total cloud condensate mixing ratio' 
 
+  idx = idx + 1
+  sgfields(idx)%varname     = 'delz'
+  sgfields(idx)%varunit     = 'm'
+  sgfields(idx)%varlong     = 'height thickness'
+
   nsigvars = idx
   if(idx .gt. maxsigvars)stop
 
@@ -108,10 +119,12 @@ module sigmavars
     allocate( cwmrg(1:im,1:jm,1:km))
     allocate(dpresg(1:im,1:jm,1:km))
     allocate( presg(1:im,1:jm,1:km))
+    allocate( delzg(1:im,1:jm,1:km))
     allocate(   psg(1:im,1:jm))
     allocate(   zsg(1:im,1:jm))
 
 #ifdef debug
+    allocate(  sig2d(1:im,1:jm))
     allocate(  sig3d(1:im,1:jm,1:kout))
 #endif
 
@@ -127,10 +140,12 @@ module sigmavars
     deallocate( cwmrg)
     deallocate(dpresg)
     deallocate( presg)
+    deallocate( delzg)
     deallocate(   psg)
     deallocate(   zsg)
 
 #ifdef debug
+    deallocate( sig2d)
     deallocate( sig3d)
 #endif
 

@@ -1,5 +1,7 @@
 module gfstonc_sfc
 
+  implicit none
+
   contains
 ! theia:
 ! gfortran -O3 -march=native -fPIC -c kinds.f90
@@ -194,6 +196,7 @@ subroutine strtoarr(strin, chararr, n_str)
   integer, intent(in) :: n_str
   character(len=n_str), intent(in) :: strin
   integer, intent(out) ::  chararr(n_str)
+  integer :: j
   chararr = 32
   do j=1,len_trim(trim(adjustl(strin)))
      chararr(j) = ichar(strin(j:j))
@@ -203,6 +206,7 @@ subroutine arrtostr(chararr, strout, n_str)
   integer, intent(in) :: n_str
   character(len=n_str), intent(out) :: strout
   integer, intent(in) ::  chararr(n_str)
+  integer :: j
   do j=1,n_str
      strout(j:j) = char(chararr(j))
   enddo

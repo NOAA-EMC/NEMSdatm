@@ -70,8 +70,8 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
     rc = nf90_put_att(ncid, datid,           'units',  vunit)
     rc = nf90_put_att(ncid, datid,       'long_name',  vlong)
   endif
-   rc = nf90_enddef(ncid)
-   if(rc .ne. 0)print *,trim(nf90_strerror(rc))
+    rc = nf90_enddef(ncid)
+    if(rc .ne. 0)print *,trim(nf90_strerror(rc))
 
    rc = nf90_put_var(ncid,  xtid,   lons)
    rc = nf90_put_var(ncid,  ytid,   lats)

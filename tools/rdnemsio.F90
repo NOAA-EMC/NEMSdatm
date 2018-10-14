@@ -17,7 +17,7 @@ program rdnemsio
 !---------------------------------------------------------------------
 
   integer :: nr
-  integer :: ii,k,idx,idxtotal
+  integer :: ii,kk,idx,idxtotal
 
   integer :: nfhour
   integer, dimension(7) :: idate
@@ -110,17 +110,17 @@ program rdnemsio
 
   print *,trim(sigfile)
   print '(a,3i6)','im,jm,nlevs = ',im,jm,nlevs
-  !print '(a,a,7i6,a,i6)',trim(fname),' idate = ',idate,' nfhour ',nfhour
+  print '(a,a,7i6,a,i6)',trim(sigfile),' idate = ',idate,' nfhour ',nfhour
 
   allocate(vcoord(nlevs+1,3,2))
 
   call read_nemsio_coords(trim(sigfile),im,jm,nlevs,vcoord,lats,lons)
-  !do k = 1,nlevs+1
-  ! print *,k,vcoord(k,1,1),vcoord(k,2,1),vcoord(k,3,1)
+  !do kk = 1,nlevs+1
+  ! print *,kk,vcoord(kk,1,1),vcoord(kk,2,1),vcoord(kk,3,1)
   !enddo
 #ifdef debug
-  do k = 1,kout
-   zout(k) = vcoord(k,2,1)
+  do kk = 1,kout
+   zout(kk) = vcoord(kk,2,1)
   enddo
 #endif
 
