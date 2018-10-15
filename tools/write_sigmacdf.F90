@@ -24,6 +24,7 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
 
   if(lstep .eq. 1)then
    rc = nf90_create(trim(cdffile), nf90_clobber, ncid)
+   print *,trim(nf90_strerror(rc)),trim(cdffile)
 
    rc = nf90_def_dim(ncid,    'Xt',          idim,     xtdim)
    rc = nf90_def_dim(ncid,    'Yt',          jdim,     ytdim)

@@ -21,7 +21,7 @@ optall = $(opt1) $(opt2)
 
 OBJS = param.o GFS_diagnostics.o kinds.o charstrings.o cdf.o sigmavars.o \
 sfcvars.o gfstonc_sfc.o gfstonc_sig.o rdnemsio.o sigma2nc.o sfc2nc.o \
- write_sigmacdf.o write_sfccdf.o tm_secs_from_bc.o
+ write_sigmacdf.o setup_outcdf.o tm_secs_from_bc.o fieldmatch.o find_t850.o
 
 
 nemsio2nc: $(OBJS) 

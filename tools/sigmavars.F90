@@ -4,7 +4,7 @@ module sigmavars
 
   implicit none
 
-  integer, parameter :: maxsigvars = 20
+  integer, parameter :: maxsigfields = 20
 
   real(kind=nemsio_realkind), allocatable, dimension(:,:,:) :: vcoord
 
@@ -22,7 +22,7 @@ module sigmavars
     logical                                     :: var3d
   end type SigmaFieldsDefs
 
-  type(SigmaFieldsDefs) :: sgfields(maxsigvars)
+  type(SigmaFieldsDefs) :: sgfields(maxsigfields)
 #ifdef debug
   ! number of vertical levels to output for debugging
   integer, parameter            :: kout = 10
@@ -102,8 +102,8 @@ module sigmavars
   sgfields(idx)%varunit     = 'm'
   sgfields(idx)%varlong     = 'height thickness'
 
-  nsigvars = idx
-  if(idx .gt. maxsigvars)stop
+  nsigfields = idx
+  if(idx .gt. maxsigfields)stop
 
   end subroutine sigmafield_setup
 

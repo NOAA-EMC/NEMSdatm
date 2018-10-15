@@ -992,7 +992,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'totprcp_ave'
     ExtDiag(idx)%desc = 'surface precipitation rate'
     ExtDiag(idx)%unit = 'kg/m**2/s'
-    ExtDiag(idx)%req4datm = .true.
+    !ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_th
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -1250,7 +1250,6 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'rain'
     ExtDiag(idx)%desc = 'total rain at this time step'
     ExtDiag(idx)%unit = 'XXX'
-    ExtDiag(idx)%req4datm = .false.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -1284,7 +1283,6 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'snow'
     ExtDiag(idx)%desc = 'snow fall at this time step'
     ExtDiag(idx)%unit = 'XXX'
-    ExtDiag(idx)%req4datm = .false.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -1334,7 +1332,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'totsnw_ave'
     ExtDiag(idx)%desc = 'surface snow precipitation rate'
     ExtDiag(idx)%unit = 'kg/m**2/s'
-    ExtDiag(idx)%req4datm = .true.
+    !ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_th
     !ExtDiag(idx)%time_avg = .TRUE.
@@ -2035,7 +2033,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'fice'
     ExtDiag(idx)%desc = 'surface ice concentration (ice=1; no ice=0)'
     ExtDiag(idx)%unit = 'fraction'
-    ExtDiag(idx)%req4datm = .true.
+    !ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -2152,7 +2150,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'tsfc'
     ExtDiag(idx)%desc = 'surface temperature'
     ExtDiag(idx)%unit = 'K'
-    ExtDiag(idx)%req4datm = .true.
+    !ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -2175,7 +2173,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'tisfc'
     ExtDiag(idx)%desc = 'surface temperature over ice fraction'
     ExtDiag(idx)%unit = 'K'
-    ExtDiag(idx)%req4datm = .true.
+    !ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
@@ -2187,7 +2185,6 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'tprcp'
     ExtDiag(idx)%desc = 'total precipitation'
     ExtDiag(idx)%unit = 'kg/m**2'
-    ExtDiag(idx)%req4datm = .false.
     !ExtDiag(idx)%mod_name = 'gfs_sfc'
     !allocate (ExtDiag(idx)%data(nblks))
     !do nb = 1,nblks
