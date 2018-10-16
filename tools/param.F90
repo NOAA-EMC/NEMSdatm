@@ -2,6 +2,11 @@ module param
 
   implicit none
 
+  ! "initialized at" hours
+  integer, parameter ::  nhours = 4
+  ! "forecast at" hours
+  integer, parameter :: nfhours = 2
+
   ! retrieved from reading header of first sfcf and sigf file
   integer :: im,jm,nrecs,nlevs
   ! number of sigma variables defined

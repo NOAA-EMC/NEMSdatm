@@ -17,10 +17,10 @@ program rdnemsio
 ! local variables
 !---------------------------------------------------------------------
 
-  integer :: i,j,k,nr
+  integer :: i,j,k,nr,nt,nf
   integer :: ii,jj,kk,idx
 
-  integer :: nfhour
+  integer :: fcsthour
   integer, dimension(7) :: idate
 
   character(len=  6) :: fmtc4
@@ -28,6 +28,12 @@ program rdnemsio
   character(len= 10) :: cyear, cmon, cday, chour, cfhour
   character(len= 40) :: cstring
   character(len=500) :: sfcfile, sigfile, outcdf
+
+! to test multiple files
+  character(len=4), dimension( nhours) :: ihour = (/'t00z','t06z','t12z','t18z'/)
+  character(len=3), dimension(nfhours) :: fhour = (/ '000', '003'/)
+! to test multiple files
+
 !gfsphysics/physics/physcons.f90
 !> gravity (\f$m/s^{2}\f$)
   real(kind=4),parameter:: con_g      =9.80665e+0
@@ -74,20 +80,21 @@ program rdnemsio
     allocate(index(1:idxtotal))
 
    do ii = 1,idxtotal
-     if(GFSsfc(ii)%req4datm)print '(i6,a14,a5,a40)',ii,&
+     !if(GFSsfc(ii)%req4datm)print '(i6,a14,a5,a40)',ii,&
      !                        print '(i6,a14,a5,a40)',ii,&
-                   trim(GFSsfc(ii)%name),'     ',trim(GFSsfc(ii)%desc)
+     !              trim(GFSsfc(ii)%name),'     ',trim(GFSsfc(ii)%desc)
    enddo
 
   !---------------------------------------------------------------------
   ! find the grid and variables in the sfc file
   !---------------------------------------------------------------------
 
-  sfcfile = trim(rtsrc)//trim(rtname)//'gdas.t18z.sfcf000.nemsio'
-  call read_nemsio_header_sfc(trim(sfcfile),im,jm,nrecs,idate,nfhour)
+  sfcfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(1)//'.sfcf'//fhour(1)//'.nemsio'
+  !sfcfile = trim(rtsrc)//trim(rtname)//'gdas.t00z.sfcf000.nemsio'
+  call read_nemsio_header_sfc(trim(sfcfile),im,jm,nrecs,idate,fcsthour)
 
   !print '(a,3i6)','im,jm,nrecs = ',im,jm,nrecs
-  print '(a,a,7i6,a,i6)',trim(sfcfile),' idate = ',idate,' nfhour ',nfhour
+  print '(a,a,7i6,a,i6)',trim(sfcfile),' idate = ',idate,' fcsthour ',fcsthour
 
   allocate(lons(1:im))
   allocate(lats(1:jm))
@@ -123,12 +130,13 @@ program rdnemsio
   ! find the grid and variables in the sigf file
   !---------------------------------------------------------------------
 
-  sigfile = trim(rtsrc)//trim(rtname)//'gdas.t18z.atmf000.nemsio'
-  call read_nemsio_header_sig(trim(sigfile),im,jm,nlevs,idate,nfhour)
+  sigfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(1)//'.atmf'//fhour(1)//'.nemsio'
+  !sigfile = trim(rtsrc)//trim(rtname)//'gdas.t00z.atmf000.nemsio'
+  call read_nemsio_header_sig(trim(sigfile),im,jm,nlevs,idate,fcsthour)
 
   !print *,trim(sigfile)
   !print '(a,3i6)','im,jm,nlevs = ',im,jm,nlevs
-  print '(a,a,7i6,a,i6)',trim(sigfile),' idate = ',idate,' nfhour ',nfhour
+  print '(a,a,7i6,a,i6)',trim(sigfile),' idate = ',idate,' fcsthour ',fcsthour
 
   allocate(vcoord(nlevs+1,3,2))
 
@@ -149,22 +157,28 @@ program rdnemsio
 #endif
   call alloc_sigma(im,jm,nlevs)
 
+! to test multiple files
+  do nt = 1,nhours
+   do nf = 1,nfhours
+   
+  sfcfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(nt)//'.sfcf'//fhour(nf)//'.nemsio'
+  sigfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(nt)//'.atmf'//fhour(nf)//'.nemsio'
   !---------------------------------------------------------------------
   ! create a timestamp
   ! set up the output netCDF file
   !---------------------------------------------------------------------
 
+  call read_nemsio_header_sfc(trim(sfcfile),im,jm,nrecs,idate,fcsthour)
   call set_taxis(idate(1),idate(2),idate(3),idate(4),idate(5),idate(6))
 
   write( cyear,fmtc4)idate(1) 
   write(  cmon,fmtc2)idate(2) 
   write(  cday,fmtc2)idate(3) 
   write( chour,fmtc2)idate(4) 
-  write(cfhour,fmtc2)nfhour 
+  write(cfhour,fmtc2)fcsthour 
   cstring = trim(cyear)//trim(cmon)//trim(cday)//trim(chour)//'.f'//trim(cfhour)
 
   outcdf = trim(rtsrc)//trim(rtname)//'gdas.'//trim(cstring)//'.nc'
-  !print *,trim(outcdf)
 
   call setup_outcdf(trim(outcdf))
 
@@ -172,20 +186,20 @@ program rdnemsio
   ! 
   !---------------------------------------------------------------------
 
-  sigfile = trim(rtsrc)//trim(rtname)//'gdas.t18z.atmf000.nemsio'
+  !sigfile = trim(rtsrc)//trim(rtname)//'gdas.t00z.atmf000.nemsio'
   call read_nemsio_griddata(trim(sigfile), im, jm, nlevs, ug, vg, &
                             tempg, zsg, psg, qg, ozg, cwmrg, dpresg, presg, delzg)
 
-  sfcfile = trim(rtsrc)//trim(rtname)//'gdas.t18z.sfcf000.nemsio'
+  !sfcfile = trim(rtsrc)//trim(rtname)//'gdas.t00z.sfcf000.nemsio'
   call read_nemsio_2dgriddata(trim(sfcfile),im,jm,nrecs,inames,itypes,grd2d)
 
-  ii = im/2; jj = jm/2
-  print *,grd2d(ii,jj,43),tempg(ii,jj,1)
-  print *,grd2d(ii,jj,44),   qg(ii,jj,1)
-  print *,grd2d(ii,jj,45),   ug(ii,jj,1)
-  print *,grd2d(ii,jj,46),   vg(ii,jj,1)
-  print *,grd2d(ii,jj,86),  zsg(ii,jj), 0.5*delzg(ii,jj,1)
-  print *,grd2d(ii,jj,40),  psg(ii,jj)
+  !ii = im/2; jj = jm/2
+  !print *,grd2d(ii,jj,43),tempg(ii,jj,1)
+  !print *,grd2d(ii,jj,44),   qg(ii,jj,1)
+  !print *,grd2d(ii,jj,45),   ug(ii,jj,1)
+  !print *,grd2d(ii,jj,46),   vg(ii,jj,1)
+  !print *,grd2d(ii,jj,86),  zsg(ii,jj), 0.5*delzg(ii,jj,1)
+  !print *,grd2d(ii,jj,40),  psg(ii,jj)
 
   !---------------------------------------------------------------------
   ! create additional fields on the fly
@@ -196,7 +210,6 @@ program rdnemsio
   call sigma2nc(trim(cstring))
 #endif
 
-  print *,nr_prcp
   rain = 0.0; snow = 0.0
 !gfsphysics/GFS_layer/GFS_physics_driver.F90
   do j = 1,jm
@@ -232,13 +245,15 @@ program rdnemsio
     else
      a2d(:,:,1) = grd2d(:,:,nr)  
     endif
-     print '(a14,i5,f14.5)',trim(GFSsfc(ii)%name),nr,a2d(im/2,jm/2,1)
 
      rc = nf90_inq_varid(ncid, trim(GFSsfc(ii)%name), datid)
      rc = nf90_put_var(ncid,                   datid,   a2d)
     endif
    enddo
     rc = nf90_close(ncid)
+
+   enddo !nf
+  enddo !nt
 
   !---------------------------------------------------------------------
   !
