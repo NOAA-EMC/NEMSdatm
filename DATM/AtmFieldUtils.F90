@@ -22,7 +22,6 @@ module AtmFieldUtils
     character(len=12)                                :: file_varname
     character(len=12)                                :: unit_name
     character(len=10)                                :: staggertype
-    logical                                          :: from3d
     real(kind=ESMF_KIND_R8), dimension(:,:), pointer :: farrayPtr => null()
   end type Atm_Field_Definition
    
@@ -50,9 +49,7 @@ module AtmFieldUtils
   character(len=ESMF_MAXSTR) :: msgString
 
   ! default values
-  AtmFieldsToExport(:)%from3d      = .false.
   AtmFieldsToExport(:)%staggertype = 'center'
-
   AtmFieldsToImport(:)%staggertype = 'center'
 
     ii = 0
@@ -127,19 +124,18 @@ module AtmFieldUtils
 
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_zonal_moment_flx'
-    AtmFieldsToExport(ii)%field_name    = 'dusfc'
-    AtmFieldsToExport(ii)%file_varname  = 'uflx_ave'
+    AtmFieldsToExport(ii)%field_name    = 'Dusfc'
+    AtmFieldsToExport(ii)%file_varname  = 'dusfc'
     AtmFieldsToExport(ii)%unit_name     = 'N/m2'
     AtmFieldsToExport(ii)%farrayPtr => dusfc
 
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_merid_moment_flx'
     AtmFieldsToExport(ii)%field_name    = 'dvsfc'
-    AtmFieldsToExport(ii)%file_varname  = 'vflx_ave'
+    AtmFieldsToExport(ii)%file_varname  = 'Dvsfc'
     AtmFieldsToExport(ii)%unit_name     = 'N/m2'
     AtmFieldsToExport(ii)%farrayPtr => dvsfc
 
-    !?? need mean up lw to provide mean net lw
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_up_lw_flx'
     AtmFieldsToExport(ii)%field_name    = 'Ulwrf'
@@ -154,15 +150,6 @@ module AtmFieldUtils
     AtmFieldsToExport(ii)%file_varname  = 'shtfl_ave'
     AtmFieldsToExport(ii)%unit_name     = 'W/m2'
     AtmFieldsToExport(ii)%farrayPtr => shtfl
-
-    !?? mean evap rate
-    !ii = ii + 1
-    !AtmFieldsToExport(ii)%standard_name = 'mean_'
-    !AtmFieldsToExport(ii)%field_name    = ''
-    !AtmFieldsToExport(ii)%file_varname  = XXX
-    !AtmFieldsToExport(ii)%unit_name     = ''
-    !AtmFieldsToExport(ii)%farrayPtr => XXX
-    !??
 
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'inst_pres_height_surface'

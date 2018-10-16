@@ -101,7 +101,7 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   !-------------------------------------------------------------------------------------
 
   allocate(landsfc(1:iatm,1:jatm))
-  call ReadMaskFromFile(trim(filename), trim('landsfc'), landsfc)
+  call ReadMaskFromFile(trim(filename), trim('slmsksfc'), landsfc)
 
   !-------------------------------------------------------------------------------------
   ! Create the gaussian grid and fill the coords and mask

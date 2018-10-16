@@ -47,12 +47,13 @@ subroutine AtmForce(gcomp,exportState,externalClock,rc)
   write( cday, i2fmt)day
   write(chour, i2fmt)hour
 
-  forcefile = trim(dirpath)//'gdas.t18z.sfcf.'//trim(cyear)//trim(cmon)//trim(cday)//trim(chour)//'.nc'
+  forcefile = trim(dirpath)//'gdas.'//trim(cyear)//trim(cmon)//trim(cday)//trim(chour)//'.nc'
+  call ESMF_LogWrite(trim(forcefile), ESMF_LOGMSG_INFO, rc=rc)
+
   ! read the Atm field data
   nfields = size(AtmFieldsToExport)
   do ii = 1,nfields
-  ! insert code for 3d fields vs 2d fields
-    varname = trim(AtmFieldsToExport(ii)%file_varname)//'sfc'
+    varname = trim(AtmFieldsToExport(ii)%file_varname)
 
     call ESMF_StateGet(exportState, &
                        itemName=trim(AtmFieldsToExport(ii)%field_name), &

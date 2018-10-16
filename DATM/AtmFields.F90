@@ -18,20 +18,20 @@ module AtmFields
   integer, public            :: imin_t, imax_t, jmin_t, jmax_t
   integer, public            :: imin_c, imax_c, jmin_c, jmax_c
 #ifdef lowres
-  integer, parameter, public :: iatm =  192, jatm =   96
-  ! for now, hardwired
-  character(len=ESMF_MAXSTR), public ::  dirpath = &
-       '/scratch4/NCEPDEV/nems/noscrub/emc.nemspara/RT/DATM-MOM6-CICE5/master-20180627/ATM/'
-  character(len=ESMF_MAXSTR), public :: gridfile = &
-       'gdas.t18z.sfcf.2018041400.nc'
+!  integer, parameter, public :: iatm =  192, jatm =   96
+!  ! for now, hardwired
+!  character(len=ESMF_MAXSTR), public ::  dirpath = &
+!       '/scratch4/NCEPDEV/nems/noscrub/emc.nemspara/RT/DATM-MOM6-CICE5/master-20180627/ATM/'
+!  character(len=ESMF_MAXSTR), public :: gridfile = &
+!       'gdas.t18z.sfcf.2018041400.nc'
 #endif
 #ifdef hires
   integer, parameter, public :: iatm = 3072, jatm = 1536
   ! for now, hardwired
   character(len=ESMF_MAXSTR), public ::  dirpath = &
-       '/scratch4/NCEPDEV/ocean/save/Denise.Worthen/NEMS_INPUT0.1/DAtm/C768/'
+       '/scratch3/NCEPDEV/stmp1/Denise.Worthen/Lin.Gan/'
   character(len=ESMF_MAXSTR), public :: gridfile = &
-       'gdas.t18z.sfcf.2018041400.nc'
+       'gdas.2016100300.nc'
 #endif
 
   integer, public :: lPet
