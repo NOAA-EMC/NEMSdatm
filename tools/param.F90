@@ -8,9 +8,8 @@ module param
   integer :: nsigfields
   ! number of req fields at sfc
   integer :: idxtotal
-  ! record index for tprcp in sfc field, total precipitation rate
-  integer :: nr_tprcp
   ! index match between req sfc fields and record number in sfc file
   integer, allocatable :: index(:)
-
+  ! index of prate_ave in sfc file used to make snow and rain
+  integer :: nr_prcp
 end module param

@@ -38,6 +38,10 @@ subroutine sigma2nc(cstring)
      sig2d(:,:) =   psg(:,:)
      call write_sigmacdf(trim(cdffile),vname,vunit,vlong,v3d,sig2d,sig3d,im,jm,kout,1)
    endif
+   if(trim(vname) .eq.    'zs')then
+     sig2d(:,:) =   zsg(:,:)
+     call write_sigmacdf(trim(cdffile),vname,vunit,vlong,v3d,sig2d,sig3d,im,jm,kout,1)
+   endif
    if(trim(vname) .eq.  'dpres')then
      sig3d(:,:,1:kout) =  dpresg(:,:,1:kout)
      call write_sigmacdf(trim(cdffile),vname,vunit,vlong,v3d,sig2d,sig3d,im,jm,kout,1)

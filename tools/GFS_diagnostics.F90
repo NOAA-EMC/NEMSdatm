@@ -992,7 +992,7 @@ module GFS_diagnostics
     ExtDiag(idx)%name = 'totprcp_ave'
     ExtDiag(idx)%desc = 'surface precipitation rate'
     ExtDiag(idx)%unit = 'kg/m**2/s'
-    !ExtDiag(idx)%req4datm = .true.
+    ExtDiag(idx)%req4datm = .true.
     !ExtDiag(idx)%mod_name = 'gfs_phys'
     !ExtDiag(idx)%cnvfac = cn_th
     !ExtDiag(idx)%time_avg = .TRUE.

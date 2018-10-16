@@ -24,7 +24,7 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
 
   if(lstep .eq. 1)then
    rc = nf90_create(trim(cdffile), nf90_clobber, ncid)
-   print *,trim(nf90_strerror(rc)),trim(cdffile)
+   !print *,trim(nf90_strerror(rc)),trim(cdffile)
 
    rc = nf90_def_dim(ncid,    'Xt',          idim,     xtdim)
    rc = nf90_def_dim(ncid,    'Yt',          jdim,     ytdim)
@@ -45,7 +45,7 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
    dim1(1) = ztdim
    rc = nf90_def_var(ncid,     'Zt', nf90_float,     dim1, ztid)
    rc = nf90_put_att(ncid, ztid,   'long_name',         'sigma')
-   rc = nf90_put_att(ncid, ztid,    'positive',          'down')
+   !rc = nf90_put_att(ncid, ztid,    'positive',          'down')
 
    dim1(1) =  tdim
    rc = nf90_def_var(ncid, 'time', nf90_double,  dim1,      timid)

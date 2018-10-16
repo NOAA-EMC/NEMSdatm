@@ -1,0 +1,191 @@
+     1     ALBDO_ave                               surface albedo
+     2         DLWRF               surface downward longwave flux
+     3        DLWRFI     instantaneous surface downward longwave 
+     4         ULWRF                 surface upward longwave flux
+     5        ULWRFI     instantaneous surface upward longwave fl
+     6         DSWRF     averaged surface downward shortwave flux
+     7        DSWRFI     instantaneous surface downward shortwave
+     8         USWRF       averaged surface upward shortwave flux
+     9        USWRFI     instantaneous surface upward shortwave f
+    10      duvb_ave                     UV-B Downward Solar Flux
+    11     cduvb_ave           Clear sky UV-B Downward Solar Flux
+    12     vbdsf_ave             Visible Beam Downward Solar Flux
+    13     vddsf_ave          Visible Diffuse Downward Solar Flux
+    14     nbdsf_ave             Near IR Beam Downward Solar Flux
+    15     nddsf_ave          Near IR Diffuse Downward Solar Flux
+    16  csulf_avetoa       Clear Sky Upward Long Wave Flux at toa
+    17  csusf_avetoa      Clear Sky Upward Short Wave Flux at toa
+    18     csdlf_ave            Clear Sky Downward Long Wave Flux
+    19     csusf_ave             Clear Sky Upward Short Wave Flux
+    20     csdsf_ave           Clear Sky Downward Short Wave Flux
+    21     csulf_ave              Clear Sky Upward Long Wave Flux
+    22      DSWRFtoa         top of atmos downward shortwave flux
+    23      USWRFtoa           top of atmos upward shortwave flux
+    24      ULWRFtoa            top of atmos upward longwave flux
+    25   TCDC_aveclm               atmos column total cloud cover
+    26 TCDC_avebndcl     boundary layer cloud layer total cloud c
+    27     TCDCcnvcl     convective cloud layer total cloud cover
+    28    PREScnvclt       pressure at convective cloud top level
+    29    PREScnvclb     pressure at convective cloud bottom leve
+    30   TCDC_avehcl           high cloud level total cloud cover
+    31   PRES_avehct                pressure high cloud top level
+    32   PRES_avehcb             pressure high cloud bottom level
+    33   TEMP_avehct             temperature high cloud top level
+    34   TCDC_avemcl            mid cloud level total cloud cover
+    35   PRES_avemct              pressure middle cloud top level
+    36   PRES_avemcb           pressure middle cloud bottom level
+    37   TEMP_avemct           temperature middle cloud top level
+    38   TCDC_avelcl            low cloud level total cloud cover
+    39   PRES_avelct                 pressure low cloud top level
+    40   PRES_avelcb              pressure low cloud bottom level
+    41   TEMP_avelct              temperature low cloud top level
+    42      sw_upfxc     total sky upward sw flux at toa - GFS ra
+    43      sw_dnfxc     total sky downward sw flux at toa - GFS 
+    44      sw_upfx0     clear sky upward sw flux at toa - GFS ra
+    45      lw_upfxc     total sky upward lw flux at toa - GFS ra
+    46      lw_upfx0     clear sky upward lw flux at toa - GFS ra
+    47     ssrun_acc         surface storm water runoff - GFS lsm
+    48      evbs_ave     Direct Evaporation from Bare Soil - GFS 
+    49      evcw_ave           Canopy water evaporation - GFS lsm
+    50         snohf        Snow Phase Change Heat Flux - GFS lsm
+    51     trans_ave                      transpiration - GFS lsm
+    52     sbsno_ave     Sublimation (evaporation from snow) - GF
+    53     snowc_ave                         snow cover - GFS lsm
+    54         soilm           total column soil moisture content
+    55      tmpmin2m                 min temperature at 2m height
+    56      tmpmax2m                 max temperature at 2m height
+    57         dusfc                  surface zonal momentum flux
+    58         dvsfc             surface meridional momentum flux
+    59     shtfl_ave                   surface sensible heat flux
+    60     lhtfl_ave                     surface latent heat flux
+    61   totprcp_ave                   surface precipitation rate
+    62  totprcpb_ave            bucket surface precipitation rate
+    63     gflux_ave                     surface ground heat flux
+    64        dlwsfc     time accumulated downward lw flux at sur
+    65        ulwsfc     time accumulated upward lw flux at surfa
+    66     sunsd_acc                            Sunshine Duration
+    67      watr_acc                           total water runoff
+    68     pevpr_ave          averaged potential evaporation rate
+    69     cwork_ave     cloud work function (valid only with sas
+    70     u-gwd_ave            surface zonal gravity wave stress
+    71     v-gwd_ave       surface meridional gravity wave stress
+    72        psmean                             surface pressure
+    73   cnvprcp_ave     averaged surface convective precipitatio
+    74  cnvprcpb_ave     averaged bucket surface convective preci
+    75       cnvprcp        surface convective precipitation rate
+    76     spfhmin2m                    minimum specific humidity
+    77     spfhmax2m                    maximum specific humidity
+    78       u10mmax                   maximum (magnitude) u-wind
+    79       v10mmax                   maximum (magnitude) v-wind
+    80    wind10mmax                           maximum wind speed
+    81          rain                 total rain at this time step
+    82         rainc            convective rain at this time step
+    83           ice                   ice fall at this time step
+    84          snow                  snow fall at this time step
+    85       graupel               graupel fall at this time step
+    86    totice_ave               surface ice precipitation rate
+    87   toticeb_ave        bucket surface ice precipitation rate
+    88    totsnw_ave              surface snow precipitation rate
+    89   totsnwb_ave       bucket surface snow precipitation rate
+    90    totgrp_ave           surface graupel precipitation rate
+    91   totgrpb_ave     bucket surface graupel precipitation rat
+    92          u10m                              10 meter u wind
+    93          v10m                              10 meter v wind
+    94         dpt2m                2 meter dew point temperature
+    95   hgt_hyblev1                               layer 1 height
+    96         psurf                             surface pressure
+    97          hpbl      surface planetary boundary layer height
+    98          pwat              atmos column precipitable water
+    99   tmp_hyblev1                          layer 1 temperature
+   100  spfh_hyblev1                    layer 1 specific humidity
+   101  ugrd_hyblev1                           layer 1 zonal wind
+   102  vgrd_hyblev1                      layer 1 meridional wind
+   103         sfexc                         Exchange Coefficient
+   104         acond                      Aerodynamic conductance
+   105       dlwsfci           instantaneous sfc downward lw flux
+   106       ulwsfci             instantaneous sfc upward lw flux
+   107       dswsfci           instantaneous sfc downward sw flux
+   108       uswsfci             instantaneous sfc upward sw flux
+   109        dusfci     instantaneous u component of surface str
+   110        dvsfci     instantaneous v component of surface str
+   111         shtfl     instantaneous surface sensible heat net 
+   112         lhtfl     instantaneous surface latent heat net fl
+   113        gfluxi       instantaneous surface ground heat flux
+   114         pevpr     instantaneous surface potential evaporat
+   115          wilt                   wiltimg point (volumetric)
+   116         fldcp                  Field Capacity (volumetric)
+   117          wet1                      normalized soil wetness
+   118         cpofp                 Percent frozen precipitation
+   119     crain_ave                    averaged categorical rain
+   120     csnow_ave                    averaged categorical snow
+   121     cfrzr_ave           averaged categorical freezing rain
+   122     cicep_ave                   averaged categorical sleet
+   123     refl_10cm                           Radar reflectivity
+   124          cnvw         subgrid scale convective cloud water
+   125     skebu_wts                        perturbation velocity
+   126     skebv_wts                        perturbation velocity
+   127      zmtnblck                 level of dividing streamline
+   128      sppt_wts                        perturbation velocity
+   129      shum_wts                        perturbation velocity
+   130         alnsf     mean nir albedo with strong cosz depende
+   131         alnwf     mean nir albedo with weak cosz dependenc
+   132         alvsf     mean vis albedo with strong cosz depende
+   133         alvwf     mean vis albedo with weak cosz dependenc
+   134        canopy             canopy water (cnwat in gfs data)
+   135          f10m     10-meter wind speed divided by lowest mo
+   136         facsf     fractional coverage with strong cosz dep
+   137         facwf     fractional coverage with weak cosz depen
+   138          ffhh                 fh parameter from PBL scheme
+   139          ffmm                 fm parameter from PBL scheme
+   140        uustar               uustar surface frictional wind
+   141         slope                           surface slope type
+   142          fice     surface ice concentration (ice=1; no ice
+   143          hice        sea ice thickness (icetk in gfs_data)
+   144        snoalb              maximum snow albedo in fraction
+   145        shdmax     maximum fractional coverage of green veg
+   146        shdmin     minimum fractional coverage of green veg
+   147         snowd                           surface snow depth
+   148         crain               instantaneous categorical rain
+   149         stype                     soil type in integer 1-9
+   150           q2m                         2m specific humidity
+   151           t2m                               2m temperature
+   152          tsfc                          surface temperature
+   153           tg3                        deep soil temperature
+   154         tisfc        surface temperature over ice fraction
+   155         tprcp                          total precipitation
+   156         vtype              vegetation type in integer 1-13
+   157         weasd                surface snow water equivalent
+   158        hgtsfc                  surface geopotential height
+   159      slmsksfc     sea-land-ice mask (0-sea, 1-land, 2-ice)
+   160       zorlsfc                            surface roughness
+   161      vfracsfc                          vegetation fraction
+   162         slc_1              liquid soil mositure at layer-1
+   163         slc_2              liquid soil mositure at layer-2
+   164         slc_3              liquid soil mositure at layer-3
+   165         slc_4              liquid soil mositure at layer-4
+   166        soilw1              volumetric soil moisture 0-10cm
+   167        soilw2             volumetric soil moisture 10-40cm
+   168        soilw3            volumetric soil moisture 40-100cm
+   169        soilw4           volumetric soil moisture 100-200cm
+   170        soilt1                      soil temperature 0-10cm
+   171        soilt2                     soil temperature 10-40cm
+   172        soilt3                    soil temperature 40-100cm
+   173        soilt4                   soil temperature 100-200cm
+   174          tref     nsst reference or foundation temperature
+   175           z_c             nsst sub-layer cooling thickness
+   176           c_0     nsst coefficient1 to calculate d(tz)/d(t
+   177           c_d     nsst coefficient2 to calculate d(tz)/d(t
+   178           w_0     nsst coefficient3 to calculate d(tz)/d(t
+   179           w_d     nsst coefficient4 to calculate d(tz)/d(t
+   180            xt     nsst heat content in diurnal thermocline
+   181            xs     nsst salinity content in diurnal thermoc
+   182            xu     nsst u-current content in diurnal thermo
+   183            xv     nsst v-current content in diurnal thermo
+   184            xz     nsst diurnal thermocline layer thickness
+   185            zm                   nsst mixed layer thickness
+   186          xtts                             nsst d(xt)/d(ts)
+   187          xzts                             nsst d(xt)/d(ts)
+   188        d_conv      nsst thickness of free convection layer
+   189           ifd          nsst index to start dtlm run or not
+   190       dt_cool                nsst sub-layer cooling amount
+   191         qrain      nsst sensible heat flux due to rainfall

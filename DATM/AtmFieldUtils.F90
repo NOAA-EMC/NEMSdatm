@@ -63,7 +63,7 @@ module AtmFieldUtils
     ii = ii + 1
     AtmFieldsToImport(ii)%standard_name = 'land_mask'
     AtmFieldsToImport(ii)%field_name    = 'LandMask'
-    AtmFieldsToImport(ii)%file_varname  = ' '
+    AtmFieldsToImport(ii)%file_varname  = 'slmsksfc'
     AtmFieldsToImport(ii)%unit_name     = '1'
     AtmFieldsToImport(ii)%farrayPtr => land_mask
 
@@ -107,23 +107,17 @@ module AtmFieldUtils
     AtmFieldsToExport(ii)%unit_name     = 'm/s'
     AtmFieldsToExport(ii)%farrayPtr => vlowest
 
-  ! ?? does this exist in output
-  ! ?? CICE needs it to calc air density lowest
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'inst_pres_height_lowest'
     AtmFieldsToExport(ii)%field_name    = 'Plowest'
-  ! temporary work around
-    AtmFieldsToExport(ii)%file_varname  = 'pres'
-  !  AtmFieldsToExport(ii)%file_varname  = 'preshy'
-  !  AtmFieldsToExport(ii)%from3d        = .true.
+    AtmFieldsToExport(ii)%file_varname  = 'pres_hyblev1'
     AtmFieldsToExport(ii)%unit_name     = 'Pa'
     AtmFieldsToExport(ii)%farrayPtr => plowest
-  ! ??
 
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_down_lw_flx'
     AtmFieldsToExport(ii)%field_name    = 'Dlwrf'
-    AtmFieldsToExport(ii)%file_varname  = 'dlwrf_ave'
+    AtmFieldsToExport(ii)%file_varname  = 'DLWRF'
     AtmFieldsToExport(ii)%unit_name     = 'W/m2'
     AtmFieldsToExport(ii)%farrayPtr => dlwrf
 
@@ -133,14 +127,14 @@ module AtmFieldUtils
 
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_zonal_moment_flx'
-    AtmFieldsToExport(ii)%field_name    = 'Dusfc'
+    AtmFieldsToExport(ii)%field_name    = 'dusfc'
     AtmFieldsToExport(ii)%file_varname  = 'uflx_ave'
     AtmFieldsToExport(ii)%unit_name     = 'N/m2'
     AtmFieldsToExport(ii)%farrayPtr => dusfc
 
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_merid_moment_flx'
-    AtmFieldsToExport(ii)%field_name    = 'Dvsfc'
+    AtmFieldsToExport(ii)%field_name    = 'dvsfc'
     AtmFieldsToExport(ii)%file_varname  = 'vflx_ave'
     AtmFieldsToExport(ii)%unit_name     = 'N/m2'
     AtmFieldsToExport(ii)%farrayPtr => dvsfc
@@ -149,7 +143,7 @@ module AtmFieldUtils
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_up_lw_flx'
     AtmFieldsToExport(ii)%field_name    = 'Ulwrf'
-    AtmFieldsToExport(ii)%file_varname  = 'ulwrf_ave'
+    AtmFieldsToExport(ii)%file_varname  = 'ULWRF'
     AtmFieldsToExport(ii)%unit_name     = 'W/m2'
     AtmFieldsToExport(ii)%farrayPtr => ulwrf
     !??
@@ -173,7 +167,7 @@ module AtmFieldUtils
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'inst_pres_height_surface'
     AtmFieldsToExport(ii)%field_name    = 'Psurf'
-    AtmFieldsToExport(ii)%file_varname  = 'pres'
+    AtmFieldsToExport(ii)%file_varname  = 'psurf'
     AtmFieldsToExport(ii)%unit_name     = 'Pa'
     AtmFieldsToExport(ii)%farrayPtr => psurf
 
@@ -209,24 +203,19 @@ module AtmFieldUtils
     AtmFieldsToExport(ii)%unit_name     = 'W/m2'
     AtmFieldsToExport(ii)%farrayPtr => nddsf
 
-  ! ?? liquid only
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_prec_rate'
     AtmFieldsToExport(ii)%field_name    = 'Prate'
-    AtmFieldsToExport(ii)%file_varname  = 'prate_ave'
+    AtmFieldsToExport(ii)%file_varname  = 'precp'
     AtmFieldsToExport(ii)%unit_name     = 'kg/m2/s'
     AtmFieldsToExport(ii)%farrayPtr => prate
-  ! ??
 
-  ! ?? snow 
-  ! missing in file, use liquid as workaround
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_fprec_rate'
     AtmFieldsToExport(ii)%field_name    = 'Snwrate'
-    AtmFieldsToExport(ii)%file_varname  = 'prate_ave'
+    AtmFieldsToExport(ii)%file_varname  = 'fprecp'
     AtmFieldsToExport(ii)%unit_name     = 'kg/m2/s'
     AtmFieldsToExport(ii)%farrayPtr => snwrate
-  ! ??
 
   !-----------------------------------------------------------------------------
   ! check

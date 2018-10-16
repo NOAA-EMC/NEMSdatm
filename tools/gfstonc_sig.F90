@@ -133,7 +133,7 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
       write(6,*)'problem with nemsio_readrecv(hgt), iret=',iret
       stop
   endif
-  
+
   ! get rid of compile warnings
       ug = 0.0
       vg = 0.0
@@ -215,20 +215,20 @@ subroutine read_nemsio_griddata(filename, nlons, nlats, nlevs, ug, vg, tempg, zs
      call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
      delzg(:,:,k) = nems_wrk2
 
-     !call nemsio_readrecv(gfile,'ugrd','mid layer',k,nems_wrk,iret=iret)
-     !if (iret/=0) then
-     !    write(6,*)'problem with nemsio_readrecv(ugrd), iret=',iret
-     !    stop
-     !endif
-     !call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
-     !ug(:,:,k) = nems_wrk2
-     !call nemsio_readrecv(gfile,'vgrd','mid layer',k,nems_wrk,iret=iret)
-     !if (iret/=0) then
-     !    write(6,*)'problem with nemsio_readrecv(vgrd), iret=',iret
-     !    stop
-     !endif
-     !call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
-     !vg(:,:,k) = nems_wrk2
+     call nemsio_readrecv(gfile,'ugrd','mid layer',k,nems_wrk,iret=iret)
+     if (iret/=0) then
+         write(6,*)'problem with nemsio_readrecv(ugrd), iret=',iret
+         stop
+     endif
+     call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
+     ug(:,:,k) = nems_wrk2
+     call nemsio_readrecv(gfile,'vgrd','mid layer',k,nems_wrk,iret=iret)
+     if (iret/=0) then
+         write(6,*)'problem with nemsio_readrecv(vgrd), iret=',iret
+         stop
+     endif
+     call onedtotwod(nems_wrk,nems_wrk2,nlons,nlats)
+     vg(:,:,k) = nems_wrk2
 
      call nemsio_readrecv(gfile,'tmp','mid layer',k,nems_wrk,iret=iret)
      if (iret/=0) then

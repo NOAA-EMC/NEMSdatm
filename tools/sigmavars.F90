@@ -25,7 +25,7 @@ module sigmavars
   type(SigmaFieldsDefs) :: sgfields(maxsigfields)
 #ifdef debug
   ! number of vertical levels to output for debugging
-  integer, parameter            :: kout = 10
+  integer, parameter            :: kout = 20
   real(kind=4), dimension(kout) :: zout
 #endif
   contains 
@@ -56,6 +56,7 @@ module sigmavars
   sgfields(idx)%varname     = 'zs'
   sgfields(idx)%varunit     = 'm'
   sgfields(idx)%varlong     = 'surface orography'
+  sgfields(idx)%var3d       = .false.
 
   idx = idx + 1
   sgfields(idx)%varname     = 'dpres'

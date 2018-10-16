@@ -21,11 +21,14 @@ subroutine fieldmatch
     varname2 = trim(varnames(nr))
     varlong2 = trim( varlong(nr))
 
-    if((varname2 .eq. 'tprcp') .and. &
-        (varlong2 .eq.   'sfc'))nr_tprcp = nr
-
     if(varname1 .eq. varname2)index(ii) = nr
-  
+    ! save the precip index to make snow and rain
+    if(varname2 .eq. 'prate_ave')nr_prcp = nr
+
+    if((varname1 .eq. 'totprcp_ave') .and. &
+        (varname2  .eq.  'prate_ave') .and. &
+         (varlong2   .eq.       'sfc'))index(ii) = nr
+     
     if((varname1   .eq. 'DLWRF') .and. &
         (varname2 .eq. 'dlwrf_ave') .and. &
          (varlong2  .eq.      'sfc'))index(ii) = nr
