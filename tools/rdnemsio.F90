@@ -28,10 +28,13 @@ program rdnemsio
   character(len= 10) :: cyear, cmon, cday, chour, cfhour
   character(len= 40) :: cstring
   character(len=500) :: sfcfile, sigfile, outcdf
+  ! for history attribute
+  character(len=300) :: cmdstr
+  character(len=  8) :: cdate
 
 ! to test multiple files
   character(len=4), dimension( nhours) :: ihour = (/'t00z','t06z','t12z','t18z'/)
-  character(len=3), dimension(nfhours) :: fhour = (/ '000', '003'/)
+  character(len=4), dimension(nfhours) :: fhour = (/'f000','f003'/)
 ! to test multiple files
 
 !gfsphysics/physics/physcons.f90
@@ -50,7 +53,6 @@ program rdnemsio
 
   fmtc4 = '(i4.4)'
   fmtc2 = '(i2.2)'
-
   !---------------------------------------------------------------------
   
    call GFS_externaldiag_populate(GFSsfc,idxtotal)
@@ -89,7 +91,7 @@ program rdnemsio
   ! find the grid and variables in the sfc file
   !---------------------------------------------------------------------
 
-  sfcfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(1)//'.sfcf'//fhour(1)//'.nemsio'
+  sfcfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(1)//'.sfc'//fhour(1)//'.nemsio'
   !sfcfile = trim(rtsrc)//trim(rtname)//'gdas.t00z.sfcf000.nemsio'
   call read_nemsio_header_sfc(trim(sfcfile),im,jm,nrecs,idate,fcsthour)
 
@@ -130,7 +132,7 @@ program rdnemsio
   ! find the grid and variables in the sigf file
   !---------------------------------------------------------------------
 
-  sigfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(1)//'.atmf'//fhour(1)//'.nemsio'
+  sigfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(1)//'.atm'//fhour(1)//'.nemsio'
   !sigfile = trim(rtsrc)//trim(rtname)//'gdas.t00z.atmf000.nemsio'
   call read_nemsio_header_sig(trim(sigfile),im,jm,nlevs,idate,fcsthour)
 
@@ -161,8 +163,8 @@ program rdnemsio
   do nt = 1,nhours
    do nf = 1,nfhours
    
-  sfcfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(nt)//'.sfcf'//fhour(nf)//'.nemsio'
-  sigfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(nt)//'.atmf'//fhour(nf)//'.nemsio'
+  sfcfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(nt)//'.sfc'//fhour(nf)//'.nemsio'
+  sigfile = trim(rtsrc)//trim(rtname)//'gdas.'//ihour(nt)//'.atm'//fhour(nf)//'.nemsio'
   !---------------------------------------------------------------------
   ! create a timestamp
   ! set up the output netCDF file
@@ -175,8 +177,16 @@ program rdnemsio
   write(  cmon,fmtc2)idate(2) 
   write(  cday,fmtc2)idate(3) 
   write( chour,fmtc2)idate(4) 
-  write(cfhour,fmtc2)fcsthour 
-  cstring = trim(cyear)//trim(cmon)//trim(cday)//trim(chour)//'.f'//trim(cfhour)
+  write(cfhour,fmtc2)idate(4)+fcsthour
+ 
+  cstring = trim(cyear)//trim(cmon)//trim(cday)//trim(cfhour)
+
+  ! create history attribute
+   call date_and_time(date=cdate)
+   call getcwd(cwd)
+  history = 'created on '//trim(cdate)//' using '//trim(cwd) &
+           //' from '//trim(sfcfile) &
+           //'  and '//trim(sigfile)
 
   outcdf = trim(rtsrc)//trim(rtname)//'gdas.'//trim(cstring)//'.nc'
 

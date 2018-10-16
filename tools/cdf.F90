@@ -22,6 +22,9 @@ module cdf
   character(len=31)             :: torg = 'hours since 1971-01-01 00:00:00'
   character(len=31)             :: tcal = 'gregorian'
 
+  character(len=300) :: cwd
+  character(len=500) :: history
+
   contains
 !---------------------------------------------------------------------
 

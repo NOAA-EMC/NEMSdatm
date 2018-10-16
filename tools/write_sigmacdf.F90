@@ -26,19 +26,19 @@ subroutine write_sigmacdf(cdffile, vname, vunit, vlong, v3d, sig2d, sig3d, idim,
    rc = nf90_create(trim(cdffile), nf90_clobber, ncid)
    !print *,trim(nf90_strerror(rc)),trim(cdffile)
 
-   rc = nf90_def_dim(ncid,    'Xt',          idim,     xtdim)
-   rc = nf90_def_dim(ncid,    'Yt',          jdim,     ytdim)
+   rc = nf90_def_dim(ncid,   'lon',          idim,     xtdim)
+   rc = nf90_def_dim(ncid,   'lat',          jdim,     ytdim)
    rc = nf90_def_dim(ncid,    'Zt',          kdim,     ztdim)
    rc = nf90_def_dim(ncid,  'time', nf90_unlimited,     tdim)
 
    dim1(1) = xtdim
-   rc = nf90_def_var(ncid,     'Xt', nf90_float,    dim1, xtid)
+   rc = nf90_def_var(ncid,   'lon', nf90_float,    dim1, xtid)
    rc = nf90_put_att(ncid, xtid,       'units', 'degrees_east')
    rc = nf90_put_att(ncid, xtid,   'long_name',    'Longitude')
    rc = nf90_put_att(ncid, xtid,      'modulo',            ' ')
 
    dim1(1) = ytdim
-   rc = nf90_def_var(ncid,     'Yt', nf90_float,     dim1, ytid)
+   rc = nf90_def_var(ncid,   'lat', nf90_float,     dim1, ytid)
    rc = nf90_put_att(ncid, ytid,       'units', 'degrees_north')
    rc = nf90_put_att(ncid, ytid,   'long_name',      'Latitude')
 
