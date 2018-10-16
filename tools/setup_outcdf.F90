@@ -20,18 +20,18 @@ subroutine setup_outcdf(cdffile)
    rc = nf90_create(trim(cdffile), nf90_clobber, ncid)
    !print *,trim(nf90_strerror(rc))
 
-   rc = nf90_def_dim(ncid,    'Xt',             im,     xtdim)
-   rc = nf90_def_dim(ncid,    'Yt',             jm,     ytdim)
+   rc = nf90_def_dim(ncid,   'lon',             im,     xtdim)
+   rc = nf90_def_dim(ncid,   'lat',             jm,     ytdim)
    rc = nf90_def_dim(ncid,  'time', nf90_unlimited,     tdim)
 
    dim1(1) = xtdim
-   rc = nf90_def_var(ncid,     'Xt', nf90_float,    dim1, xtid)
+   rc = nf90_def_var(ncid,   'lon', nf90_float,    dim1, xtid)
    rc = nf90_put_att(ncid, xtid,       'units', 'degrees_east')
    rc = nf90_put_att(ncid, xtid,   'long_name',    'Longitude')
    rc = nf90_put_att(ncid, xtid,      'modulo',            ' ')
 
    dim1(1) = ytdim
-   rc = nf90_def_var(ncid,     'Yt', nf90_float,     dim1, ytid)
+   rc = nf90_def_var(ncid,   'lat', nf90_float,     dim1, ytid)
    rc = nf90_put_att(ncid, ytid,       'units', 'degrees_north')
    rc = nf90_put_att(ncid, ytid,   'long_name',      'Latitude')
 
@@ -54,6 +54,7 @@ subroutine setup_outcdf(cdffile)
      rc = nf90_put_att(ncid, datid,      'long_name',  vlong)
     endif
    enddo
+     rc = nf90_put_att(ncid, nf90_global, 'history', trim(history))
      rc = nf90_enddef(ncid)
 
      rc = nf90_put_var(ncid,  xtid,   lons)
