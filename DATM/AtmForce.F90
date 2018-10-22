@@ -40,12 +40,13 @@ subroutine AtmForce(gcomp,exportState,externalClock,rc)
 
   call ESMF_ClockGet(externalClock, currTime=currTime, advanceCount=stepcount,rc=rc)
   call ESMF_TimeGet(currTime,yy=year,mm=month,dd=day,h=hour,dayOfYear=jday,rc=rc)
-  !print *,month,day,hour
   
   write(cyear, i4fmt)year
   write( cmon, i2fmt)month
   write( cday, i2fmt)day
   write(chour, i2fmt)hour
+
+  if(mod(hour,3) .ne. 0)return
 
   forcefile = trim(dirpath)//'gdas.'//trim(cyear)//trim(cmon)//trim(cday)//trim(chour)//'.nc'
   call ESMF_LogWrite(trim(forcefile), ESMF_LOGMSG_INFO, rc=rc)

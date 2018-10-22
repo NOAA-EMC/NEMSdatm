@@ -455,7 +455,7 @@ module DAtm
 
     ! get forcing on each newday
     !if(newday)call AtmRun(model, importState, exportState, clock, rc)
-    !call AtmRun(model, importState, exportState, clock, rc)
+    call AtmRun(model, importState, exportState, clock, rc)
 
     ! Check Values
     call AtmFieldCheck(importState, exportState, 'after AtmRun', rc)

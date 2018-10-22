@@ -29,9 +29,11 @@ module AtmFields
   integer, parameter, public :: iatm = 3072, jatm = 1536
   ! for now, hardwired
   character(len=ESMF_MAXSTR), public ::  dirpath = &
-       '/scratch3/NCEPDEV/stmp1/Denise.Worthen/Lin.Gan/'
+!       '/scratch3/NCEPDEV/stmp1/Denise.Worthen/Lin.Gan/'
+       '/scratch3/NCEPDEV/stmp1/Denise.Worthen/DATM_Lin/'
   character(len=ESMF_MAXSTR), public :: gridfile = &
-       'gdas.2016100300.nc'
+!       'gdas.2016100300.nc'
+       'gdas.2016070100.nc'
 #endif
 
   integer, public :: lPet

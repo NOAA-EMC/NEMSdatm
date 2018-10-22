@@ -131,8 +131,8 @@ module AtmFieldUtils
 
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_merid_moment_flx'
-    AtmFieldsToExport(ii)%field_name    = 'dvsfc'
-    AtmFieldsToExport(ii)%file_varname  = 'Dvsfc'
+    AtmFieldsToExport(ii)%field_name    = 'Dvsfc'
+    AtmFieldsToExport(ii)%file_varname  = 'dvsfc'
     AtmFieldsToExport(ii)%unit_name     = 'N/m2'
     AtmFieldsToExport(ii)%farrayPtr => dvsfc
 
@@ -142,7 +142,6 @@ module AtmFieldUtils
     AtmFieldsToExport(ii)%file_varname  = 'ULWRF'
     AtmFieldsToExport(ii)%unit_name     = 'W/m2'
     AtmFieldsToExport(ii)%farrayPtr => ulwrf
-    !??
 
     ii = ii + 1
     AtmFieldsToExport(ii)%standard_name = 'mean_sensi_heat_flx'
