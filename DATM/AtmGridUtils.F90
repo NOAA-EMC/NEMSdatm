@@ -27,12 +27,21 @@ module AtmGridUtils
 
   real(kind=ESMF_KIND_R8), intent(out) :: coordarray(coorddim)
 
+  real(kind=ESMF_KIND_R4) :: coordR4(coorddim)
+
   integer :: ncid, varid, rc
 
   rc = nf90_open(trim(filename), nf90_nowrite, ncid)
+  if(rc .ne. 0)then
+   call ESMF_LogWrite(trim(filename)//' not found!', ESMF_LOGMSG_INFO, rc=rc)
+   call ESMF_Finalize(endflag=ESMF_END_ABORT)
+  end if
+
   rc = nf90_inq_varid(ncid, trim(coordname), varid)
-  rc = nf90_get_var(ncid, varid, coordarray)
+  rc = nf90_get_var(ncid, varid, coordR4)
   rc = nf90_close(ncid)
+
+  coordarray = real(coordR4,8)
 
   end subroutine ReadCoordFromFile
 
@@ -41,7 +50,7 @@ module AtmGridUtils
   subroutine ReadMaskFromFile(filename,maskname,maskarray)
 
   use netcdf
-  use AtmFields, only : iatm, jatm
+  use AtmInternalFields, only : iatm, jatm
 
           character(len=*), intent(in) :: filename, maskname
 
@@ -50,6 +59,11 @@ module AtmGridUtils
   integer :: ncid, varid, rc
 
   rc = nf90_open(trim(filename), nf90_nowrite, ncid)
+  if(rc .ne. 0)then
+   call ESMF_LogWrite(trim(filename)//' not found!', ESMF_LOGMSG_INFO, rc=rc)
+   call ESMF_Finalize(endflag=ESMF_END_ABORT)
+  end if
+
   rc = nf90_inq_varid(ncid, trim(maskname), varid)
   rc = nf90_get_var(ncid, varid, maskarray)
   rc = nf90_close(ncid)
@@ -72,6 +86,8 @@ module AtmGridUtils
 
     integer :: i,j,lde,localDECount
     real(kind=ESMF_KIND_R8), pointer  :: r8Ptr(:,:)
+    character(len=ESMF_MAXSTR)        :: msgString
+
 
   ! Initialize return code
   rc = ESMF_SUCCESS
@@ -83,7 +99,7 @@ module AtmGridUtils
     return  ! bail out
 
   do lde = 0,localDECount-1
-
+ 
   ! Retrieve a pointer to the first coord 
   call ESMF_GridGetCoord(grid, localDE=lde,&
                         coordDim=1, &
@@ -209,6 +225,7 @@ module AtmGridUtils
     return  ! bail out
 
   ! a pointer to the array
+  !call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, localDe=0, rc = rc)
   call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, rc = rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
@@ -271,7 +288,8 @@ module AtmGridUtils
     return  ! bail out
 
   !a pointer to the mask
-  call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, localDE=0, rc = rc)
+  !call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, localDE=0, rc = rc)
+  call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, rc = rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
     line=__LINE__, &
     file=__FILE__)) &

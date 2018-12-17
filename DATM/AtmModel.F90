@@ -3,11 +3,14 @@ module AtmModel
 #include "LocalDefs.F90"
 
   use ESMF
-  use AtmFields
-  use AtmFieldUtils, only : AtmFieldsToExport
-#ifndef toydatm
-  use AtmFieldUtils, only : AtmFieldsToImport
+  !use AtmInternalFields, only : atmlonc, atmlatc, atmlonq, atmlatq
+  use AtmInternalFields, only : hfwd, hbak, nfhout
+  use AtmFieldUtils,     only : AtmForceFwd2Bak, AtmBundleCheck
+  use AtmFieldUtils,     only : AtmBundleIntp
+#ifdef coupled
+  use AtmImportFields,   only : land_mask
 #endif
+
   implicit none
 
   private
@@ -19,6 +22,8 @@ module AtmModel
 
   subroutine AtmInit(gcomp, importState, exportState, externalClock, rc)
 
+    use AtmInternalFields
+
     type(ESMF_GridComp)  :: gcomp
     type(ESMF_State)     :: importState
     type(ESMF_State)     :: exportState
@@ -28,93 +33,54 @@ module AtmModel
     ! Local variables
     type(ESMF_Grid)                :: grid
     type(ESMF_Field)               :: field
-
-              integer :: i,j
-    character(len=12) :: fname
-
-    integer, dimension(2)         ::  lb,  ub
-    integer, dimension(2)         :: tlb, tub
-    integer, dimension(2)         :: clb, cub
+    type(ESMF_Array)               :: array2d
 
     integer(kind=ESMF_KIND_I4), pointer  :: i4Ptr(:,:)
     character(len=ESMF_MAXSTR) :: msgString
+    
+    integer :: lbnd1,ubnd1,lbnd2,ubnd2
 
     rc = ESMF_SUCCESS
 
     call ESMF_LogWrite("User run routine AtmInit started", ESMF_LOGMSG_INFO)
 
+    ! Get the Grid
     call ESMF_GridCompGet(gcomp, grid=grid, rc=rc)
-
-    ! Get bounds information 
-    fname = trim(AtmFieldsToExport(1)%field_name)
-    call ESMF_StateGet(exportState, itemName=trim(fname),field=field,rc=rc)
-    call ESMF_FieldGetBounds(field, localDE=0, &
-                             totalLBound=tlb, totalUBound=tub, &
-                             computationalLBound=clb, computationalUBound=cub, &
-                             exclusiveLBound=lb, exclusiveUBound=ub, rc=rc)
-
-    ! Exclusive region: data unique to this DE, can be used as source for halo operation
-    imin_e =  lb(1); imax_e =  ub(1)
-    jmin_e =  lb(2); jmax_e =  ub(2)
-    ! Total region: data plus the halo widths
-    imin_t = tlb(1); imax_t = tub(1)
-    jmin_t = tlb(2); jmax_t = tub(2)
-    ! Computational
-    imin_c = clb(1); imax_c = cub(1)
-    jmin_c = clb(2); jmax_c = cub(2)
-    write(*,'(a,5i5)')'AtmInit lPet: imin,imax,jmin,jmax= ', &
-                      lPet, imin_e,imax_e,jmin_e,jmax_e
-
-    ! Get Coord information from Grid
-    call ESMF_GridGetCoord(grid, coordDim=1, &
-                           localDe=0,&
-                           staggerloc=ESMF_STAGGERLOC_CENTER, &
-                           farrayPtr=atmlonc, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-
-
-    call ESMF_GridGetCoord(grid, coordDim=2, &
-                           localDe=0,&
-                           staggerloc=ESMF_STAGGERLOC_CENTER, &
-                           farrayPtr=atmlatc, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-
-    call ESMF_GridGetCoord(grid, coordDim=1, &
-                           localDe=0,&
-                           staggerloc=ESMF_STAGGERLOC_CORNER, &
-                           farrayPtr=atmlonq, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-
-     call ESMF_GridGetCoord(grid, coordDim=2, &
-                           localDe=0,&
-                           staggerloc=ESMF_STAGGERLOC_CORNER, &
-                           farrayPtr=atmlatq, rc=rc)
-     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__, &
-       file=__FILE__)) &
-       return  ! bail out
 
     ! Get the mask from the grid
+    !call ESMF_GridGetItem(grid, &
+    !                      itemFlag=ESMF_GRIDITEM_MASK, &
+    !                      farrayPtr=i4Ptr, rc=rc)
     call ESMF_GridGetItem(grid, &
-                          localDe=0,&
                           itemFlag=ESMF_GRIDITEM_MASK, &
-                          staggerloc=ESMF_STAGGERLOC_CENTER, &
-                          farrayPtr=i4Ptr, rc=rc)
+                          array=array2d, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-#ifndef toydatm
-    ! The land_mask array from the grid mask
+
+    !a pointer to the mask
+    !call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, localDE=0, rc = rc)
+    call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, rc = rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    lbnd1 = lbound(i4Ptr,1); ubnd1 = ubound(i4Ptr,1)
+    lbnd2 = lbound(i4Ptr,2); ubnd2 = ubound(i4Ptr,2)
+    iprnt = lbnd1 + ((ubnd1 - lbnd1)+1)/2
+    jprnt = lbnd2 + ((ubnd2 - lbnd2)+1)/2
+
+    write(msgString,*)'AtmInit: print at ',iprnt,jprnt,&
+                      i4Ptr(iprnt,jprnt)
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+#ifdef test
+    ! The land_mask import array from the grid mask
     call ESMF_StateGet(importState, &
                        itemName=trim('LandMask'), &
                        field=field, rc=rc)
@@ -129,33 +95,36 @@ module AtmModel
       file=__FILE__)) &
       return  ! bail out
   
-    do j = jmin_e,jmax_e
-     do i = imin_e,imax_e
+    do j = lbound(i4Ptr,2),ubound(i4Ptr,2)
+     do i = lbound(i4Ptr,1),ubound(i4Ptr,1)
       land_mask(i,j) = real(i4Ptr(i,j),8)
      enddo
     enddo
+#endif
+    ! Set up the fields in the AtmBundle 
+    call AtmBundleSetUp
 
-    write(msgString,*)'AtmInit: ',lPet,minval(real(land_mask,4)), &
-                                       maxval(real(land_mask,4))
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-#endif 
-    write(msgString,*)'AtmInit: ',lPet,minval(real(atmlonc,4)), &
-                                       maxval(real(atmlonc,4))
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-    write(msgString,*)'AtmInit: ',lPet,minval(real(atmlatc,4)), &
-                                       maxval(real(atmlatc,4))
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-    write(msgString,*)'AtmInit: ',lPet,minval(real(atmlonq,4)), &
-                                       maxval(real(atmlonq,4))
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-    write(msgString,*)'AtmInit: ',lPet,minval(real(atmlatq,4)), &
-                                       maxval(real(atmlatq,4))
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    ! Create and fill the AtmBundle 
+    call    AtmBundleCreate(gcomp, importState, exportState, rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
 
-    call   AtmForce(gcomp,exportState,externalClock,rc)
+    ! initialize the fwd and bak fields as special case at initialzation
+    call AtmForce(gcomp,exportState,externalClock,0,rc)
+    call AtmBundleCheck('after AtmForce',rc)
+    ! copy the fwd timestamp to the bak timestamp
+    hbak = hfwd
+    call AtmForceFwd2Bak(rc)
+    call AtmBundleCheck('after Fwd2Bak',rc)
+    ! reload the fwd 
+    call AtmForce(gcomp,exportState,externalClock,0,rc)
+    call AtmBundleCheck('after AtmForce',rc)
+    !time interpolate between fwd & bak values
+    call AtmBundleIntp(gcomp, importState, exportState, externalClock, 0.0d8, rc)
 
     call ESMF_LogWrite("User run routine AtmInit finished", ESMF_LOGMSG_INFO)
-   
   end subroutine AtmInit
 
   !-----------------------------------------------------------------------------
@@ -168,6 +137,13 @@ module AtmModel
     type(ESMF_Clock)     :: externalClock
     integer, intent(out) :: rc
    
+    ! Local variables
+    type(ESMF_Time)      :: currTime
+
+      integer(kind=ESMF_KIND_I4) :: iyear,imonth,iday,ihour,iminut
+         real(kind=ESMF_KIND_R8) :: hour,minut
+    character(len=ESMF_MAXSTR)   :: msgString
+
     integer :: counter = 0
 
     rc = ESMF_SUCCESS
@@ -176,10 +152,35 @@ module AtmModel
 
     ! Increment counter
     counter = counter + 1
-    call AtmForce(gcomp,exportState,externalClock,rc)
 
-    ! Prints Atm fields on Atm grid
-    !call AtmPrint(gcomp, importState, exportState, externalClock, counter, rc)
+    ! get the current time of the model clock 
+    call ESMF_ClockGet(externalClock, currTime=currTime, rc=rc)
+    ! get the current time of the model clock
+    ! returns minutes as whole number
+    call ESMF_TimeGet(currTime,mm=imonth,h_r8=hour,m_r8=minut,rc=rc)
+
+    ! new forcing increment
+    if(mod(minut,real(nfhout)*60.0) .eq. 0)then
+     ! move the current fwd values to bak
+     call AtmForceFwd2Bak(rc)
+     ! copy the fwd timestamp to the bak timestamp
+     hbak = hfwd
+     ! get new forcing data---always fills the _fwd values in AtmBundle
+     call AtmForce(gcomp,exportState,externalClock,1,rc)
+    endif
+    ! get the current time of the model clock
+    call ESMF_ClockGet(externalClock, currTime=currTime, rc=rc)
+    call ESMF_TimeGet(currTime,yy=iyear,mm=imonth,dd=iday,h=ihour,m=iminut,rc=rc)
+    !write(msgString,*)iyear,imonth,iday,ihour,iminut
+    !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    
+    call ESMF_TimeGet(currTime,h_r8=hour,rc=rc)
+    write(msgString,*)'AtmRun: hbkd,hour,hfwd ', hbak,hour,hfwd
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    
+    call AtmBundleCheck('after AtmRun',rc)
+    !time interpolate between fwd & bak values
+    call AtmBundleIntp(gcomp, importState, exportState, externalClock, hour, rc)
 
     call ESMF_LogWrite("User run routine AtmRun finished", ESMF_LOGMSG_INFO)
 

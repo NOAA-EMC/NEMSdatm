@@ -3,8 +3,8 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 #include "LocalDefs.F90"
 
   use ESMF
-  use AtmFields, only : lPet, iatm, jatm, dirpath, gridfile
-  use AtmFields, only : AtmIndexType
+  use AtmInternalFields, only : lPet, iatm, jatm, dirpath, cdate0, filename_base
+  use AtmInternalFields, only : AtmIndexType
 
   use AtmGridUtils
 
@@ -20,12 +20,12 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   type(ESMF_Array)                 :: array2d
 
   character(len=ESMF_MAXSTR) :: filename
-  character(len=ESMF_MAXSTR) ::  varname
   character(len=ESMF_MAXSTR) :: msgString
 
-  integer :: i,j,lde,blocklist(2),localDECount
+  integer :: i,j,lde,peX,peY,peList(2),localDECount
   integer(kind=ESMF_KIND_I4), pointer  :: i4Ptr(:,:)
-     real(kind=ESMF_KIND_R8), pointer  :: r8Ptr(:,:)
+  
+  integer(kind=ESMF_KIND_I4), allocatable :: cppeX(:), cppeY(:)
 
   ! gaussian grid center coords
   real(kind=ESMF_KIND_R8), allocatable :: coordXc(:),coordYc(:)
@@ -34,27 +34,38 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   ! gaussian grid landsfc mask
   real(kind=ESMF_KIND_R4), allocatable :: landsfc(:,:)
 
-  filename = trim(dirpath)//trim(gridfile)
+  filename = trim(dirpath)//trim(filename_base)//trim(cdate0)//'.nc'
 
   rc = ESMF_SUCCESS
 
   call ESMF_LogWrite(trim(tag)//" AtmGridSetUp routine started", ESMF_LOGMSG_INFO)
-  write(msgString,*)'using ',trim(filename)
+  write(msgString,*)'using grid file : ',trim(filename)
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
   write(msgString,*)'petCnt = ',petCnt,' lPet =  ', lPet
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-
+#ifdef test
+  ! specifying distribution not working; use default distribution
   if(petCnt == 1)then
   !serial
-   blocklist = (/1,1/)
+   peList = (/1,1/)
   else
-   !Decomposed in x only (default)
-   !blocklist = (/petCnt,1/)
-   !Decomposed in y only
-   !blocklist = (/1,petCnt/)
-   !Decomposed in xy 
-   blocklist = (/petCnt/2,petCnt/2/)
+   if(mod(petCnt,6) .ne. 0)then
+    write(msgString,*)'must use multiple of 6 PEs; Aborting '
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    call ESMF_Finalize(endflag = ESMF_END_ABORT)
+   else
+       peX = 2*petCnt/3
+       peY =   petCnt/3
+    peList = (/peX, peY/)
+     allocate(cppeX(1:peX))
+     allocate(cppeY(1:peY))
+     cppeX(:) = iatm/peX
+     cppeY(:) = jatm/peY
+    write(msgString,*)'petCnt = ',petCnt,' peX,peY = ',peX,peY
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+   endif
   endif
+#endif
   !-------------------------------------------------------------------------------------
   ! read Gaussian coords from file. Native EMSF_ArrayRead does not read Y coord from
   ! file correctly
@@ -105,9 +116,11 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 
   !-------------------------------------------------------------------------------------
   ! Create the gaussian grid and fill the coords and mask
+  ! for now, this defaults to the default distribution where the first dimension is
+  ! decomposed with all PEs
   !-------------------------------------------------------------------------------------
-  grid = ESMF_GridCreate1PeriDim(maxIndex=(/iatm,jatm/), &
-                                 regDecomp=blocklist, &
+  grid = ESMF_GridCreate1PeriDim(maxIndex = (/iatm,jatm/), &
+  !                               regDecomp = peList, &
                                  coordDep1=(/1,2/), &            ! grid is defined with 2d
                                  coordDep2=(/1,2/), &            ! lat,lon arrays
                                  periodicDim=1,&
@@ -126,8 +139,9 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
     line=__LINE__, &
     file=__FILE__)) &
     return  ! bail out
-  !print *,'localDECount = ',localDECount
 
+  write(msgString,*)'localDECount ',lPet,localDECount
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
   !-------------------------------------------------------------------------------------
   ! Allocate storage for coords and mask
   !-------------------------------------------------------------------------------------
@@ -233,6 +247,7 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   deallocate(coordYc); deallocate(coordYq)
   deallocate(landsfc)
 
+  !deallocate(cppeX); deallocate(cppeY)
   call ESMF_LogWrite("User AtmGridSetUp routine ended", ESMF_LOGMSG_INFO)
 
 end subroutine AtmGridSetUp
