@@ -53,15 +53,18 @@ nuopc: datm.mk
 nuopcinstall: install
 
 # ------------------------------------------------------------------------------
-AtmOBJS=AtmFields.o AtmFieldUtils.o AtmGridUtils.o AtmForce.o AtmGridSetUp.o AtmModel.o LocalDefs.o
+AtmOBJS=datm.o AtmInternalFields.o AtmExportFields.o AtmImportFields.o AtmFieldUtils.o AtmGridUtils.o AtmForce.o AtmGridSetUp.o AtmModel.o LocalDefs.o AtmBundleCreate.o
 
 datm.o: $(AtmOBJS)
 
-AtmModel.o: AtmFields.o AtmFieldUtils.o
-AtmForce.o: AtmFields.o AtmFieldUtils.o
-AtmGridSetUp.o : AtmFields.o
-AtmFieldUtils.o: AtmFields.o
-AtmGridSetUp.o: AtmFields.o AtmGridUtils.o 
+datm.o: AtmExportFields.o AtmModel.o AtmFieldUtils.o
+AtmModel.o: AtmFieldUtils.o
+AtmForce.o: AtmExportFields.o
+AtmGridSetUp.o: AtmExportFields.o AtmGridUtils.o
+AtmBundleCreate.o : AtmInternalFields.o
+AtmFieldUtils.o : AtmInternalFields.o AtmImportFields.o AtmExportFields.o
+AtmImportFields.o : AtmInternalFields.o
+AtmExportFields.o : AtmInternalFields.o
 # -----------------------------------------------------------------------------
 .PRECIOUS: %.o
 %.mk : %.o
@@ -82,7 +85,7 @@ libdatm.a: datm.o $(AtmOBJS)
 # -----------------------------------------------------------------------------
 .PHONY: clean distclean info install
 clean:
-	rm -f *.a *.mk *.o *.mod
+	rm -f *.a *.mk *.o *.mod *.nc esmApp PET*
 distclean: clean
 	rm -f *.o *.mod
 
