@@ -125,8 +125,8 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
                                  coordDep2=(/1,2/), &            ! lat,lon arrays
                                  periodicDim=1,&
                                  poleDim=2,&
-                                 polekindflag=(/ESMF_POLEKIND_MONOPOLE, &
-                                                ESMF_POLEKIND_MONOPOLE/), &
+  !                               polekindflag=(/ESMF_POLEKIND_MONOPOLE, &
+  !                                              ESMF_POLEKIND_MONOPOLE/), &
                                  indexflag=AtmIndexType, &
                                  name=trim(gridname), rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
