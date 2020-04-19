@@ -76,28 +76,7 @@ module AtmModel
     write(msgString,*)'AtmInit: print at ',iprnt,jprnt,&
                       i4Ptr(iprnt,jprnt)
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-#ifdef test
-    ! The land_mask import array from the grid mask
-    call ESMF_StateGet(importState, &
-                       itemName=trim('LandMask'), &
-                       field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
- 
-    call ESMF_FieldGet(field,farrayPtr=land_mask,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-  
-    do j = lbound(i4Ptr,2),ubound(i4Ptr,2)
-     do i = lbound(i4Ptr,1),ubound(i4Ptr,1)
-      land_mask(i,j) = real(i4Ptr(i,j),8)
-     enddo
-    enddo
-#endif
+
     ! Set up the fields in the AtmBundle 
     call AtmBundleSetUp
 
