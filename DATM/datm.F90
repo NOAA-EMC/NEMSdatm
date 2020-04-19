@@ -469,20 +469,19 @@ module DAtm
     integer, intent(out) :: rc
     
     ! local variables
-    type(ESMF_State)     :: importState, exportState
-    type(ESMF_Clock)     :: modelClock
-    type(ESMF_Time)      ::  stopTime
-    type(ESMF_Time)      :: startTime
-    type(ESMF_Time)      ::  currTime
+    type(ESMF_State)           :: importState, exportState
+    type(ESMF_Clock)           :: modelClock
+    type(ESMF_Time)            ::  stopTime
+    type(ESMF_Time)            :: startTime
+    type(ESMF_Time)            ::  currTime
+    type(ESMF_TimeInterval)    :: timeStep
 
     character(len=ESMF_MAXSTR) :: msgString
-    integer :: idumpcnt = 0
+    character(len=ESMF_MAXSTR) :: export_timestr
 
     rc = ESMF_SUCCESS
   
     call ESMF_LogWrite("User routine ModelAdvance Atm started", ESMF_LOGMSG_INFO)
-
-    idumpcnt = idumpcnt + 1
 
     ! query the Component for its clock, importState and exportState
     call NUOPC_ModelGet(model, &
@@ -515,6 +514,9 @@ module DAtm
          preString="ModelAdvance DATM with CLOCK stop:   ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
+    call ESMF_ClockGet(modelClock, currTime=currTime, timeStep=timeStep, rc=rc)
+
+    call ESMF_TimeGet(currTime+timestep, timestring=export_timestr, rc=rc)
 
     ! Run the component
     call AtmRun(model, importState, exportState, modelClock, rc)
@@ -527,7 +529,7 @@ module DAtm
       return  ! bail out
 
     if(dumpfields)then
-     call AtmFieldDump(importstate, exportstate, 'after AtmRun', idumpcnt, rc)
+     call AtmFieldDump(importstate, exportstate, 'after AtmRun', trim(export_timestr), rc)
      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
        line=__LINE__, &
        file=__FILE__)) &

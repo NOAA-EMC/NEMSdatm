@@ -186,12 +186,12 @@ module AtmFieldUtils
 
   !-----------------------------------------------------------------------------
 
-  subroutine AtmFieldDump(importState, exportState, tag, iicnt, rc)
+  subroutine AtmFieldDump(importState, exportState, tag, timestr, rc)
 
   type(ESMF_State)              :: importState
   type(ESMF_State)              :: exportState
   character(len=*), intent( in) :: tag
-           integer, intent( in) :: iicnt
+  character(len=*), intent( in) :: timestr
            integer, intent(out) :: rc
 
   ! Local variables
@@ -215,19 +215,17 @@ module AtmFieldUtils
                       field=field,rc=rc)
     varname = trim(AtmFieldsToExport(ii)%standard_name)
 
-    if(trim(tag) .eq. 'before AtmRun')filename = 'field_atm_exportb_'//trim(varname)//'.nc'
-    if(trim(tag) .eq.  'after AtmRun')filename = 'field_atm_exporta_'//trim(varname)//'.nc'
+    if(trim(tag) .eq. 'before AtmRun')filename = 'field_atm_exportb_'//trim(timestr)//'.nc'
+    if(trim(tag) .eq.  'after AtmRun')filename = 'field_atm_exporta_'//trim(timestr)//'.nc'
 
-    !if(trim(varname) .eq. 'inst_pres_height_lowest')then
     write(msgString, '(a,i6)')'Writing exportState field '//trim(varname)//' to ' &
-                            //trim(filename)//' iicnt = ',iicnt
+                            //trim(filename)
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
     call ESMF_FieldWrite(field, &
-                         fileName=filename, &
-                         variableName=varname, &
-                         overwrite=.true., &
-                         timeslice=iicnt,rc=rc)
+                         fileName =trim(filename), &
+                         timeslice=1, &
+                         overwrite=.true., rc=rc)
     !endif
     !if(iicnt .eq. 1)then
     ! write(msgString, *)'Writing exportState field ',trim(varname),' to ',trim(filename)
