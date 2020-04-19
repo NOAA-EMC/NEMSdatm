@@ -7,9 +7,6 @@ module AtmModel
   use AtmInternalFields, only : hfwd, hbak, nfhout
   use AtmFieldUtils,     only : AtmForceFwd2Bak, AtmBundleCheck
   use AtmFieldUtils,     only : AtmBundleIntp
-#ifdef coupled
-  use AtmImportFields,   only : land_mask
-#endif
 
   implicit none
 

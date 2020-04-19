@@ -11,15 +11,10 @@ module DAtm
   use NUOPC_Model, &
     model_routine_SS            => SetServices, &
     model_label_SetRunClock     => label_SetRunClock, &
-    model_label_CheckImport     => label_CheckImport, &
     model_label_Advance         => label_Advance
  
   ! Fields exported by Atm
   use AtmExportFields,   only : AtmExportFieldsSetUp, AtmFieldsToExport
-#ifdef coupled
-  ! Fields imported by Atm
-  use AtmImportFields,   only : AtmImportFieldsSetUp, AtmFieldsToImport
-#endif
   use AtmFieldUtils,     only : AtmFieldsAdvertise, AtmFieldsRealize
   use AtmFieldUtils,     only : AtmFieldDump
   use AtmFieldUtils,     only : AtmFieldCheck
@@ -103,21 +98,6 @@ module DAtm
     call NUOPC_CompSpecialize(model, &
                               specLabel=model_label_SetRunClock, &
                               specRoutine=SetRunClock, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-
-    ! overwrite default CheckImport method
-    ! if not overwritten, checkimport verifies that all import fields are at the current
-    ! time of internal clock 
-    !call ESMF_MethodRemove(model, label=model_label_CheckImport, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    !call NUOPC_CompSpecialize(model, specLabel=model_label_CheckImport, &
-    !  specRoutine=CheckImport, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -217,9 +197,6 @@ module DAtm
 
    ! set up the field atts for the Atm component 
     call AtmExportFieldsSetUp
-#ifdef coupled
-    call AtmImportFieldsSetUp
-#endif
 
     call ESMF_LogWrite("User initialize routine InitP0 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -248,13 +225,7 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-#ifdef coupled
-    !call AtmFieldsAdvertise(importState, AtmFieldsToImport, rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-#endif
+
   !-----------------------------------------------------------------------------
   ! get config variables, like fv3_cap
   ! ? could also get npx,npy (npx*npy=nprocs) to set decomposition
@@ -387,13 +358,7 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-#ifdef coupled_test
-    call AtmFieldsRealize(importState, gridOut, AtmFieldsToImport, 'Atm Import', rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-#endif
+
     ! Attach the grid to the Component
     call ESMF_GridCompSet(model, grid=gridOut, rc=rc)
 
@@ -405,26 +370,7 @@ module DAtm
     ! timestep, so.....
     ! -> set Updated Field Attribute to "true", indicating to the IPDv02p5
     ! generic code to set the timestamp for this Field
-#ifdef coupled_test
-    nfields = size(AtmFieldsToImport)
-    do ii = 1,nfields
-      call ESMF_StateGet(importState, &
-                         field=field, &
-                         itemName=trim(AtmFieldsToImport(ii)%field_name), rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__)) &
-        return  ! bail out
 
-      call NUOPC_SetAttribute(field, name="Updated", value="true", rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__)) &
-        return  ! bail out
-
-      call ESMF_LogWrite(trim(AtmFieldsToImport(ii)%field_name)//' set to Updated', ESMF_LOGMSG_INFO)
-    enddo !ii
-#endif
     nfields = size(AtmFieldsToExport)
     do ii = 1,nfields
       call ESMF_StateGet(exportState, &
@@ -664,76 +610,4 @@ module DAtm
     call ESMF_LogWrite("User routine SetRunClock Atm finished", ESMF_LOGMSG_INFO)
   end subroutine SetRunClock
 
-  !-----------------------------------------------------------------------------
-
-  subroutine CheckImport(model, rc)
-
-    type(ESMF_GridComp)   :: model
-    integer, intent(out)  :: rc
-
-    ! This is the routine that enforces the complex time dependence on the
-    ! import fields. 
-    !
-    ! local variables
-    type(ESMF_Clock)              :: clock
-    type(ESMF_State)              :: importState, exportState
-    type(ESMF_Time)               :: currtime, starttime, stoptime
-    logical                       :: neededCurrent
-    logical                       :: atStopTime
-
-    integer :: ii,nfields
-    character(len=ESMF_MAXSTR) :: msgString
-
-    rc = ESMF_SUCCESS
-
-    call ESMF_LogWrite("User routine CheckImport Atm started", ESMF_LOGMSG_INFO)
-
-    call NUOPC_ModelGet(model, &
-                        modelClock=clock, &
-                        importState=importState, &
-                        exportState=exportState, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-
-    ! get the current time and stop time out of the clock
-    call ESMF_ClockGet(clock, &
-                       currTime=currtime, &
-                       startTime=starttime, &
-                       stopTime=stoptime,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-
-    call ESMF_ClockPrint(clock, options="currTime", &
-         preString="CheckImport with CLOCK current:   ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
-    call ESMF_ClockPrint(clock, options="startTime", &
-         preString="CheckImport with CLOCK start:   ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
-    call ESMF_ClockPrint(clock, options="stopTime", &
-         preString="CheckImport with CLOCK stop:   ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO, rc=rc)
-
-    call ESMF_StateGet(importState, itemCount=nfields,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-#ifdef coupled_test
-    !ensure fields from ATM are at stopTime 
-    nfields = size(AtmFieldsToImport)
-    do ii=1,nfields
-     atStopTime = NUOPC_IsAtTime(importState, stopTime, &
-                                 fieldName=AtmFieldsToImport(ii)%field_name, rc=rc)
-    enddo
-#endif
-    call ESMF_LogWrite("User routine CheckImport Atm finished", ESMF_LOGMSG_INFO)
-
-  end subroutine CheckImport
 end module DAtm
