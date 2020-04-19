@@ -111,13 +111,13 @@ module DAtm
     ! overwrite default CheckImport method
     ! if not overwritten, checkimport verifies that all import fields are at the current
     ! time of internal clock 
-    call ESMF_MethodRemove(model, label=model_label_CheckImport, rc=rc)
+    !call ESMF_MethodRemove(model, label=model_label_CheckImport, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call NUOPC_CompSpecialize(model, specLabel=model_label_CheckImport, &
-      specRoutine=CheckImport, rc=rc)
+    !call NUOPC_CompSpecialize(model, specLabel=model_label_CheckImport, &
+    !  specRoutine=CheckImport, rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -249,7 +249,7 @@ module DAtm
       file=__FILE__)) &
       return  ! bail out
 #ifdef coupled
-    call AtmFieldsAdvertise(importState, AtmFieldsToImport, rc)
+    !call AtmFieldsAdvertise(importState, AtmFieldsToImport, rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
@@ -387,7 +387,7 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-#ifdef coupled
+#ifdef coupled_test
     call AtmFieldsRealize(importState, gridOut, AtmFieldsToImport, 'Atm Import', rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
@@ -405,7 +405,7 @@ module DAtm
     ! timestep, so.....
     ! -> set Updated Field Attribute to "true", indicating to the IPDv02p5
     ! generic code to set the timestamp for this Field
-#ifdef coupled
+#ifdef coupled_test
     nfields = size(AtmFieldsToImport)
     do ii = 1,nfields
       call ESMF_StateGet(importState, &
@@ -725,7 +725,7 @@ module DAtm
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-#ifdef coupled
+#ifdef coupled_test
     !ensure fields from ATM are at stopTime 
     nfields = size(AtmFieldsToImport)
     do ii=1,nfields
