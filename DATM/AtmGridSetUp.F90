@@ -43,29 +43,6 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
   write(msgString,*)'petCnt = ',petCnt,' lPet =  ', lPet
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-#ifdef test
-  ! specifying distribution not working; use default distribution
-  if(petCnt == 1)then
-  !serial
-   peList = (/1,1/)
-  else
-   if(mod(petCnt,6) .ne. 0)then
-    write(msgString,*)'must use multiple of 6 PEs; Aborting '
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-    call ESMF_Finalize(endflag = ESMF_END_ABORT)
-   else
-       peX = 2*petCnt/3
-       peY =   petCnt/3
-    peList = (/peX, peY/)
-     allocate(cppeX(1:peX))
-     allocate(cppeY(1:peY))
-     cppeX(:) = iatm/peX
-     cppeY(:) = jatm/peY
-    write(msgString,*)'petCnt = ',petCnt,' peX,peY = ',peX,peY
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-   endif
-  endif
-#endif
   !-------------------------------------------------------------------------------------
   ! read Gaussian coords from file. Native EMSF_ArrayRead does not read Y coord from
   ! file correctly
@@ -125,8 +102,6 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
                                  coordDep2=(/1,2/), &            ! lat,lon arrays
                                  periodicDim=1,&
                                  poleDim=2,&
-  !                               polekindflag=(/ESMF_POLEKIND_MONOPOLE, &
-  !                                              ESMF_POLEKIND_MONOPOLE/), &
                                  indexflag=AtmIndexType, &
                                  name=trim(gridname), rc=rc)
   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
