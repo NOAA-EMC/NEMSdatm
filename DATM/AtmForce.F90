@@ -23,6 +23,7 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
   integer(kind=ESMF_KIND_I4)    :: year, month, day, hour, jday
 
   integer :: ii,nfields
+  integer :: iii, iid, iiu
 
   character(len=ESMF_MAXSTR) :: varname
   character(len=ESMF_MAXSTR) :: filename 
@@ -115,6 +116,41 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
                              AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt)
      call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
    endif !isPresent
+  enddo
+
+  ! Check for fields which are not Present but are needed
+  ! Not very clean---would have been better to create this field in the forcing file
+  nfields = size(AtmBundleFields)
+  do ii = 1,nfields
+   if(.not.AtmBundleFields(ii)%isPresent)then
+    varname = trim(AtmBundleFields(ii)%standard_name)
+
+    ! get the '_fwd' field
+    call ESMF_FieldBundleGet(AtmBundleFwd, &
+                             fieldName=trim(AtmBundleFields(ii)%field_name)//'_fwd', &
+                             field=field, rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    call ESMF_FieldGet(field,farrayPtr=AtmBundleFields(ii)%farrayPtr_fwd,rc=rc)
+    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+      line=__LINE__, &
+      file=__FILE__)) &
+      return  ! bail out
+
+    if(trim(varname) .eq. 'mean_net_lw_flx')then
+         iid = 0; iiu = 0
+      do iii = 1,nfields
+       if(trim(AtmBundleFields(iii)%standard_name) == 'mean_down_lw_flx')iid = iii
+       if(trim(AtmBundleFields(iii)%standard_name) ==   'mean_up_lw_flx')iiu = iii
+      enddo
+
+      AtmBundleFields(ii)%farrayPtr_fwd = AtmBundleFields(iid)%farrayPtr_fwd  &
+                                        - AtmBundleFields(iiu)%farrayPtr_fwd 
+    endif
+   endif !not present
   enddo
 
   call ESMF_LogWrite("User routine AtmForce finished", ESMF_LOGMSG_INFO)

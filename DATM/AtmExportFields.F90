@@ -30,6 +30,7 @@ module AtmExportFields
   real(kind=ESMF_KIND_R8), dimension(:,:), public, pointer :: dswrf
   real(kind=ESMF_KIND_R8), dimension(:,:), public, pointer :: dlwrf
   real(kind=ESMF_KIND_R8), dimension(:,:), public, pointer :: ulwrf
+  real(kind=ESMF_KIND_R8), dimension(:,:), public, pointer :: nlwrf
 
   real(kind=ESMF_KIND_R8), dimension(:,:), public, pointer :: lhtfl
   real(kind=ESMF_KIND_R8), dimension(:,:), public, pointer :: shtfl
@@ -148,6 +149,13 @@ module AtmExportFields
     AtmFieldsToExport(ii)%unit_name     = 'W/m2'
     AtmFieldsToExport(ii)%farrayPtr     => ulwrf
 
+    ! DLWRF-ULWRF
+    ii = ii + 1
+    AtmFieldsToExport(ii)%standard_name = 'mean_net_lw_flx'
+    AtmFieldsToExport(ii)%field_name    = 'Nlwrf'
+    AtmFieldsToExport(ii)%file_varname  = 'NLWRF'
+    AtmFieldsToExport(ii)%unit_name     = 'W/m2'
+    AtmFieldsToExport(ii)%farrayPtr     => nlwrf
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------

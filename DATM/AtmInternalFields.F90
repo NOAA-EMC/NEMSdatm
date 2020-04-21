@@ -44,6 +44,7 @@ module AtmInternalFields
 
   integer, parameter, public :: AtmFieldCount =  6  & !height lowest
                                               +  3  & !swd,lwd,lwup
+                                              +  1  & !net lw
                                               +  4  & !momentum,sens,lat
                                               +  4  & !vis,ir,dir,dif
                                               +  3    !ps,prec
@@ -91,7 +92,7 @@ module AtmInternalFields
   !-----------------------------------------------------------------------------
 
     ii = ii + 1
-    AtmBundleFields(ii)%standard_name = 'mean_zonal_moment_flx'
+    AtmBundleFields(ii)%standard_name = 'mean_zonal_moment_flx_atm'
     AtmBundleFields(ii)%field_name    = 'Dusfc'
     AtmBundleFields(ii)%file_varname  = 'dusfc'
     AtmBundleFields(ii)%unit_name     = 'N/m2'
@@ -99,7 +100,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%farrayPtr_fwd => null()
 
     ii = ii + 1
-    AtmBundleFields(ii)%standard_name = 'mean_merid_moment_flx'
+    AtmBundleFields(ii)%standard_name = 'mean_merid_moment_flx_atm'
     AtmBundleFields(ii)%field_name    = 'Dvsfc'
     AtmBundleFields(ii)%file_varname  = 'dvsfc'
     AtmBundleFields(ii)%unit_name     = 'N/m2'
@@ -182,6 +183,15 @@ module AtmInternalFields
     AtmBundleFields(ii)%standard_name = 'mean_up_lw_flx'
     AtmBundleFields(ii)%field_name    = 'Ulwrf'
     AtmBundleFields(ii)%file_varname  = 'ULWRF'
+    AtmBundleFields(ii)%unit_name     = 'W/m2'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+
+    ! created from DLWRF-ULWRF in AtmForce
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'mean_net_lw_flx'
+    AtmBundleFields(ii)%field_name    = 'Nlwrf'
+    AtmBundleFields(ii)%file_varname  = ' '
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
@@ -294,6 +304,7 @@ module AtmInternalFields
      call ESMF_ConfigGetAttribute(config=cfdata, &
                                   value=lvalue, &
                                   label=trim(AtmBundleFields(ii)%standard_name),rc=rc)
+
      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
        line=__LINE__, &
        file=__FILE__)) &
