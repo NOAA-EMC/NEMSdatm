@@ -65,14 +65,14 @@ module AtmExportFields
   !-----------------------------------------------------------------------------
 
     ii = ii + 1
-    AtmFieldsToExport(ii)%standard_name = 'mean_zonal_moment_flx_atm'
+    AtmFieldsToExport(ii)%standard_name = 'mean_zonal_moment_flx'
     AtmFieldsToExport(ii)%field_name    = 'Dusfc'
     AtmFieldsToExport(ii)%file_varname  = 'dusfc'
     AtmFieldsToExport(ii)%unit_name     = 'N/m2'
     AtmFieldsToExport(ii)%farrayPtr     => dusfc
 
     ii = ii + 1
-    AtmFieldsToExport(ii)%standard_name = 'mean_merid_moment_flx_atm'
+    AtmFieldsToExport(ii)%standard_name = 'mean_merid_moment_flx'
     AtmFieldsToExport(ii)%field_name    = 'Dvsfc'
     AtmFieldsToExport(ii)%file_varname  = 'dvsfc'
     AtmFieldsToExport(ii)%unit_name     = 'N/m2'

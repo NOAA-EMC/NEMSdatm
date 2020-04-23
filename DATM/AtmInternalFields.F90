@@ -92,7 +92,7 @@ module AtmInternalFields
   !-----------------------------------------------------------------------------
 
     ii = ii + 1
-    AtmBundleFields(ii)%standard_name = 'mean_zonal_moment_flx_atm'
+    AtmBundleFields(ii)%standard_name = 'mean_zonal_moment_flx'
     AtmBundleFields(ii)%field_name    = 'Dusfc'
     AtmBundleFields(ii)%file_varname  = 'dusfc'
     AtmBundleFields(ii)%unit_name     = 'N/m2'
@@ -100,7 +100,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%farrayPtr_fwd => null()
 
     ii = ii + 1
-    AtmBundleFields(ii)%standard_name = 'mean_merid_moment_flx_atm'
+    AtmBundleFields(ii)%standard_name = 'mean_merid_moment_flx'
     AtmBundleFields(ii)%field_name    = 'Dvsfc'
     AtmBundleFields(ii)%file_varname  = 'dvsfc'
     AtmBundleFields(ii)%unit_name     = 'N/m2'
