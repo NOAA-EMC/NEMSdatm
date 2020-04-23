@@ -1,0 +1,5 @@
+**/*.o
+**/*.a
+**/*.mod
+DATM/datm.mk
+DATM_INSTALL
