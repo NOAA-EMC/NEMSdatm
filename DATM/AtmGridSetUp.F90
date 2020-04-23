@@ -25,8 +25,6 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   integer :: i,j,lde,peX,peY,peList(2),localDECount
   integer(kind=ESMF_KIND_I4), pointer  :: i4Ptr(:,:)
   
-  integer(kind=ESMF_KIND_I4), allocatable :: cppeX(:), cppeY(:)
-
   ! gaussian grid center coords
   real(kind=ESMF_KIND_R8), allocatable :: coordXc(:),coordYc(:)
   ! gaussian grid corner coords
@@ -222,7 +220,6 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   deallocate(coordYc); deallocate(coordYq)
   deallocate(landsfc)
 
-  !deallocate(cppeX); deallocate(cppeY)
   call ESMF_LogWrite("User AtmGridSetUp routine ended", ESMF_LOGMSG_INFO)
 
 end subroutine AtmGridSetUp
