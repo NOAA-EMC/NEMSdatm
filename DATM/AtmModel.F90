@@ -3,7 +3,7 @@ module AtmModel
 #include "LocalDefs.F90"
 
   use ESMF
-  !use AtmInternalFields, only : atmlonc, atmlatc, atmlonq, atmlatq
+  use AtmInternalFields, only : ChkErr
   use AtmInternalFields, only : hfwd, hbak, nfhout
   use AtmFieldUtils,     only : AtmForceFwd2Bak, AtmBundleCheck
   use AtmFieldUtils,     only : AtmBundleIntp
@@ -14,6 +14,9 @@ module AtmModel
 
   ! called by Cap
   public :: AtmInit, AtmRun, AtmFinal
+
+  character(len=*),parameter :: u_FILE_u = &
+     __FILE__
 
   contains
 
@@ -43,10 +46,7 @@ module AtmModel
 
     ! Get the Grid
     call ESMF_GridCompGet(gcomp, grid=grid, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! Get the mask from the grid
     !call ESMF_GridGetItem(grid, &
@@ -55,18 +55,12 @@ module AtmModel
     call ESMF_GridGetItem(grid, &
                           itemFlag=ESMF_GRIDITEM_MASK, &
                           array=array2d, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     !a pointer to the mask
     !call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, localDE=0, rc = rc)
     call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, rc = rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     lbnd1 = lbound(i4Ptr,1); ubnd1 = ubound(i4Ptr,1)
     lbnd2 = lbound(i4Ptr,2); ubnd2 = ubound(i4Ptr,2)
@@ -82,10 +76,7 @@ module AtmModel
 
     ! Create and fill the AtmBundle 
     call    AtmBundleCreate(gcomp, importState, exportState, rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! initialize the fwd and bak fields as special case at initialzation
     call AtmForce(gcomp,exportState,externalClock,0,rc)

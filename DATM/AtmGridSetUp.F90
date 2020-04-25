@@ -4,7 +4,7 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 
   use ESMF
   use AtmInternalFields, only : lPet, iatm, jatm, dirpath, cdate0, filename_base
-  use AtmInternalFields, only : AtmIndexType
+  use AtmInternalFields, only : AtmIndexType, ChkErr
 
   use AtmGridUtils
 
@@ -21,6 +21,8 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 
   character(len=ESMF_MAXSTR) :: filename
   character(len=ESMF_MAXSTR) :: msgString
+  character(len=*),parameter :: u_FILE_u = &
+     __FILE__
 
   logical :: north_south
   integer :: i,j,lde,peX,peY,peList(2),localDECount
@@ -39,9 +41,9 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 
   call ESMF_LogWrite(trim(tag)//" AtmGridSetUp routine started", ESMF_LOGMSG_INFO)
   write(msgString,*)'using grid file : ',trim(filename)
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
   write(msgString,*)'petCnt = ',petCnt,' lPet =  ', lPet
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
   !-------------------------------------------------------------------------------------
   ! read Gaussian coords from file. Native EMSF_ArrayRead does not read Y coord from
   ! file correctly
@@ -55,10 +57,10 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
 
   write(msgString,*)'coordXc,   ',lPet,minval(real(coordXc,4)), &
                                        maxval(real(coordXc,4))
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
   write(msgString,*)'coordYc,   ',lPet,minval(real(coordYc,4)), &
                                        maxval(real(coordYc,4))
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
   ! find the N-S ordering of the grid
   ! N(j=1):S(j=jatm) or S(j=1):N(j=jatm)
@@ -89,10 +91,10 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   
   write(msgString,*)'coordXq,   ',lPet,minval(real(coordXq,4)), &
                                        maxval(real(coordXq,4))
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
   write(msgString,*)'coordYq,   ',lPet,minval(real(coordYq,4)), &
                                        maxval(real(coordYq,4))
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
   !-------------------------------------------------------------------------------------
   ! ESMF_ArrayRead can read the mask from the file, but it is the wrong type (r4) and
@@ -116,19 +118,13 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
                                  poleDim=2,&
                                  indexflag=AtmIndexType, &
                                  name=trim(gridname), rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   call ESMF_GridGet(grid, localDECount=localDECount, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   write(msgString,*)'localDECount ',lPet,localDECount
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
   !-------------------------------------------------------------------------------------
   ! Allocate storage for coords and mask
   !-------------------------------------------------------------------------------------
@@ -136,19 +132,13 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
   call ESMF_GridAddCoord(grid, &
                          staggerloc=ESMF_STAGGERLOC_CENTER, &
                          rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! Q (Corner) stagger
   call ESMF_GridAddCoord(grid, &
                          staggerloc=ESMF_STAGGERLOC_CORNER, &
                          rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! Mask
   call ESMF_GridAddItem(grid, &
@@ -156,10 +146,8 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
                         itemFlag=ESMF_GRIDITEM_MASK, &
                         itemTypeKind=ESMF_TYPEKIND_I4, &
                         rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
   !-------------------------------------------------------------------------------------
   ! Add coords
   !-------------------------------------------------------------------------------------
@@ -178,10 +166,7 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
                         staggerloc=ESMF_STAGGERLOC_CENTER, &
                         itemFlag=ESMF_GRIDITEM_MASK, &
                         farrayPtr=i4Ptr, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   !fill the value using the landsfc mask
   i4Ptr = 0
@@ -196,27 +181,18 @@ subroutine AtmGridSetUp(grid,petCnt,gridname,tag,rc)
                         staggerloc=ESMF_STAGGERLOC_CENTER, &
                         itemFlag=ESMF_GRIDITEM_MASK, &
                         array=array2d, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! a pointer to the array on this DE
   call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, localDE=lde, rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! Set the mask value in the grid
   call ESMF_GridSetItem(grid, &
                         itemFlag=ESMF_GRIDITEM_MASK, &
                         staggerloc=ESMF_STAGGERLOC_CENTER, &
                         array=array2d, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   enddo !lde
   !-------------------------------------------------------------------------------------

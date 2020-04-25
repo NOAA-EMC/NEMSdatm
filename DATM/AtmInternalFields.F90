@@ -6,6 +6,11 @@ module AtmInternalFields
 
   implicit none
 
+  public :: ChkErr
+
+  character(len=*),parameter :: u_FILE_u = &
+     __FILE__
+
   private
 
   !from model_configure
@@ -288,27 +293,17 @@ module AtmInternalFields
   !-----------------------------------------------------------------------------
 
     cfdata=ESMF_ConfigCreate(rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_ConfigLoadFile(config=cfdata ,filename='datm_data_table' ,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     nfields = size(AtmBundleFields)
     do ii = 1,nfields
      call ESMF_ConfigGetAttribute(config=cfdata, &
                                   value=lvalue, &
                                   label=trim(AtmBundleFields(ii)%standard_name),rc=rc)
-
-     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__, &
-       file=__FILE__)) &
-       return  ! bail out
+     if (ChkErr(rc,__LINE__,u_FILE_u)) return
      AtmBundleFields(ii)%isPresent=lvalue
     enddo
 
@@ -327,4 +322,17 @@ module AtmInternalFields
     enddo
 
   end subroutine AtmBundleSetUp
+
+  logical function ChkErr(rc, line, file)
+    integer, intent(in) :: rc
+    integer, intent(in) :: line
+    character(len=*), intent(in) :: file
+    integer :: lrc
+    chkerr = .false.
+    lrc = rc
+    if (ESMF_LogFoundError(rcToCheck=lrc, msg=ESMF_LOGERR_PASSTHRU, line=line, file=file)) then
+     chkerr = .true.
+    endif
+  end function ChkErr
+
 end module AtmInternalFields

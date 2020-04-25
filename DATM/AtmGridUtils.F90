@@ -5,6 +5,7 @@ module AtmGridUtils
   !-----------------------------------------------------------------------------
 
   use ESMF
+  use AtmInternalFields, only : ChkErr
 
   implicit none
 
@@ -14,6 +15,9 @@ module AtmGridUtils
   public :: ReadCoordFromFile, ReadMaskFromFile
   public :: AddCoord2Grid, WriteCoord, WriteMask 
  
+  character(len=*),parameter :: u_FILE_u = &
+     __FILE__
+
   contains
 
   !-------------------------------------------------------------------------------------
@@ -33,7 +37,7 @@ module AtmGridUtils
 
   rc = nf90_open(trim(filename), nf90_nowrite, ncid)
   if(rc .ne. 0)then
-   call ESMF_LogWrite(trim(filename)//' not found!', ESMF_LOGMSG_INFO, rc=rc)
+   call ESMF_LogWrite(trim(filename)//' not found!', ESMF_LOGMSG_INFO)
    call ESMF_Finalize(endflag=ESMF_END_ABORT)
   end if
 
@@ -60,7 +64,7 @@ module AtmGridUtils
 
   rc = nf90_open(trim(filename), nf90_nowrite, ncid)
   if(rc .ne. 0)then
-   call ESMF_LogWrite(trim(filename)//' not found!', ESMF_LOGMSG_INFO, rc=rc)
+   call ESMF_LogWrite(trim(filename)//' not found!', ESMF_LOGMSG_INFO)
    call ESMF_Finalize(endflag=ESMF_END_ABORT)
   end if
 
@@ -93,10 +97,7 @@ module AtmGridUtils
   rc = ESMF_SUCCESS
 
   call ESMF_GridGet(grid, localDECount=localDECount, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   do lde = 0,localDECount-1
  
@@ -105,10 +106,7 @@ module AtmGridUtils
                         coordDim=1, &
                         staggerloc=stagger, &
                         farrayPtr=r8Ptr, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! fill the values from the coordX farray
   do j = lbound(r8Ptr,2),ubound(r8Ptr,2)
@@ -122,37 +120,25 @@ module AtmGridUtils
                          coordDim=1, &
                          staggerloc=stagger, &
                          array=array2d, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! a pointer to the array on this DE
   call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, localDE=lde, rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! Set the first coord in the grid
   call ESMF_GridSetCoord(grid, &
                         coordDim=1, &
                         staggerloc=stagger, &
                         array=array2d, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! Retrieve a pointer to the second coord 
   call ESMF_GridGetCoord(grid, localDE=lde,&
                         coordDim=2, &
                         staggerloc=stagger, &
                         farrayPtr=r8Ptr, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! fill the values from the coordY farray
   do j = lbound(r8Ptr,2),ubound(r8Ptr,2)
@@ -166,27 +152,18 @@ module AtmGridUtils
                          coordDim=2, &
                          staggerloc=stagger, &
                          array=array2d, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! a pointer to the array on this DE
   call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, localDE=lde, rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! Set the second coord in the grid
   call ESMF_GridSetCoord(grid, &
                         coordDim=2, &
                         staggerloc=stagger, &
                         array=array2d, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   enddo !lde
 
@@ -219,18 +196,12 @@ module AtmGridUtils
                           coordDim=dimnum, &
                           staggerloc=stagger, &
                           array=array2d, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! a pointer to the array
   !call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, localDe=0, rc = rc)
   call ESMF_ArrayGet(array2d, farrayPtr=r8Ptr, rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! verify values
   write(msgString,*)'r8Ptr ',trim(fname),' lPet', &
@@ -238,7 +209,7 @@ module AtmGridUtils
                          lbound(r8Ptr,2),ubound(r8Ptr,2), &
                          minval(real(r8Ptr,4)), &
                          maxval(real(r8Ptr,4))
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
   ! write to a file
   varname =  trim(fname); filename = trim(varname)//'.nc'
@@ -246,10 +217,7 @@ module AtmGridUtils
                        fileName=filename, &
                        variableName=varname, &
                        overwrite=.true., rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   end subroutine WriteCoord
 
@@ -282,18 +250,12 @@ module AtmGridUtils
                         itemFlag=ESMF_GRIDITEM_MASK, &
                         staggerloc=ESMF_STAGGERLOC_CENTER, &
                         array=array2d, rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   !a pointer to the mask
   !call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, localDE=0, rc = rc)
   call ESMF_ArrayGet(array2d, farrayPtr=i4Ptr, rc = rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   ! verify values
   write(msgString,*)'i4Ptr ',trim(fname),' lPet', &
@@ -301,7 +263,7 @@ module AtmGridUtils
                           lbound(i4Ptr,2),ubound(i4Ptr,2), &
                           minval(i4Ptr), &
                           maxval(i4Ptr)
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
   ! write to a file
    varname =  trim(fname); filename = trim(varname)//'.nc'
@@ -309,10 +271,7 @@ module AtmGridUtils
                         fileName=filename, &
                         variableName=varname, &
                         overwrite=.true., rc=rc)
-  if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-    line=__LINE__, &
-    file=__FILE__)) &
-    return  ! bail out
+  if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   end subroutine WriteMask
 end module AtmGridUtils

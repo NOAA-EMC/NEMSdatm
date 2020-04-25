@@ -36,6 +36,9 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
   character(len=8) :: i2fmt = '(i2.2)'
   character(len=8) :: i4fmt = '(i4.4)'
 
+  character(len=*),parameter :: u_FILE_u = &
+     __FILE__
+
   ! Set initial values
 
   rc = ESMF_SUCCESS
@@ -58,17 +61,11 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
   else
    ! set the time interval to the forecast file interval
    call ESMF_TimeIntervalSet(timeStep, h=nfhout, rc=rc)
-   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-     line=__LINE__, &
-     file=__FILE__)) &
-     return  ! bail out
+   if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
    ! find the time at the currtime + nfhout
    call ESMF_ClockGetNextTime(externalClock, nextTime, timestep=timeStep, rc=rc)
-   if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-     line=__LINE__, &
-     file=__FILE__)) &
-     return  ! bail out
+   if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
    call ESMF_TimeGet(nextTime,yy=year,mm=month,dd=day,h=hour,dayOfYear=jday,rc=rc)
    write(cyear, i4fmt)year
@@ -80,7 +77,7 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
    call ESMF_TimeGet(nextTime,h_r8=hfwd,rc=rc)
   endif
   write(msgString,'(3a,f12.3)')'using ',trim(filename),' at fwd clock hour ',real(hfwd,4)
-  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+  call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
   ! read the Atm field data into the Fwd bundle
   nfields = size(AtmBundleFields)
@@ -92,29 +89,20 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
     call ESMF_FieldBundleGet(AtmBundleFwd, &
                              fieldName=trim(AtmBundleFields(ii)%field_name)//'_fwd', &
                              field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldRead(field, &
                         fileName=trim(filename), &
                         variableName = trim(varname), &
                         rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldGet(field,farrayPtr=AtmBundleFields(ii)%farrayPtr_fwd,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
      write(msgString,'(i6,2a18,f14.5)')ii,' inside AtmForce  ',trim(varname), &
                              AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt)
-     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
    endif !isPresent
   enddo
 
@@ -129,16 +117,10 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
     call ESMF_FieldBundleGet(AtmBundleFwd, &
                              fieldName=trim(AtmBundleFields(ii)%field_name)//'_fwd', &
                              field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldGet(field,farrayPtr=AtmBundleFields(ii)%farrayPtr_fwd,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if(trim(varname) .eq. 'mean_net_lw_flx')then
          iid = 0; iiu = 0
