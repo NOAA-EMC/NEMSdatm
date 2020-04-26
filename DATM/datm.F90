@@ -407,7 +407,8 @@ module DAtm
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
     call ESMF_ClockGet(modelClock, currTime=currTime, timeStep=timeStep, rc=rc)
 
-    call ESMF_TimeGet(currTime+timestep, timestring=export_timestr, rc=rc)
+    ! TODO: why is this the export time?
+    call ESMF_TimeGet(currTime, timestring=export_timestr, rc=rc)
 
     ! Run the component
     call AtmRun(model, importState, exportState, modelClock, rc)

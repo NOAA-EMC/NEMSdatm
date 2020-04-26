@@ -39,10 +39,10 @@ module AtmInternalFields
     character(len=10)                                :: staggertype
               logical                                :: isPresent
     ! for export
-    real(kind=ESMF_KIND_R8), dimension(:,:), pointer :: farrayPtr     => null()
+    real(kind=ESMF_KIND_R8), dimension(:,:), pointer :: farrayPtr
     ! for forcing data, two time levels
-    real(kind=ESMF_KIND_R4), dimension(:,:), pointer :: farrayPtr_bak => null()
-    real(kind=ESMF_KIND_R4), dimension(:,:), pointer :: farrayPtr_fwd => null()
+    real(kind=ESMF_KIND_R4), dimension(:,:), pointer :: farrayPtr_bak
+    real(kind=ESMF_KIND_R4), dimension(:,:), pointer :: farrayPtr_fwd
   end type AtmField_Definition
 
   ! Field Bundles for Atm model used for time-interpolation of forcing

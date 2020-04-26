@@ -391,8 +391,8 @@ module AtmFieldUtils
       wf = hfwd - hour
       wb = hour - hbak
     wtot = wf+wb
-    AtmBundleFields(ii)%farrayPtr = real((wf*AtmBundleFields(ii)%farrayPtr_bak &
-                                         +  wb*AtmBundleFields(ii)%farrayPtr_fwd)/wtot,8)
+    AtmBundleFields(ii)%farrayPtr = (wf*real(AtmBundleFields(ii)%farrayPtr_bak,8) &
+                                  +  wb*real(AtmBundleFields(ii)%farrayPtr_fwd,8))/wtot
    endif !hour=0
 
     !ijloc = maxloc(abs(AtmBundleFields(ii)%farrayPtr))
