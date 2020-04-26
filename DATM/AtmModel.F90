@@ -72,11 +72,11 @@ module AtmModel
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
 
     ! Set up the fields in the AtmBundle 
-    call AtmBundleSetUp
+    !call AtmBundleSetUp
 
     ! Create and fill the AtmBundle 
-    call    AtmBundleCreate(gcomp, importState, exportState, rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    !call    AtmBundleCreate(gcomp, importState, exportState, rc)
+    !if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! initialize the fwd and bak fields as special case at initialzation
     call AtmForce(gcomp,exportState,externalClock,0,rc)
