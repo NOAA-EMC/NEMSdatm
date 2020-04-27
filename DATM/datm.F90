@@ -14,17 +14,14 @@ module DAtm
     model_label_Advance         => label_Advance
  
   ! Fields exported by Atm
-  use AtmExportFields,   only : AtmExportFieldsSetUp, AtmFieldsToExport
   use AtmFieldUtils,     only : AtmFieldsAdvertise, AtmFieldsRealize
   use AtmFieldUtils,     only : AtmFieldDump
   use AtmFieldUtils,     only : AtmFieldCheck
+  use AtmGridUtils,      only : WriteCoord, WriteMask
 
   ! AtmInit called by InitializeP2, AtmRun called by ModelAdvance
   use AtmModel,          only : AtmInit, AtmRun, AtmFinal
-
-  use AtmInternalFields, only : ChkErr
-  use AtmInternalFields, only : lPet, petCnt, dt_atmos, iatm, jatm, nfhout
-  use AtmInternalFields, only : dirpath, cdate0, filename_base
+  use AtmInternalFields
 
   implicit none
   
@@ -163,9 +160,6 @@ module DAtm
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 #endif
 
-   ! set up the field atts for the Atm component 
-    call AtmExportFieldsSetUp
-
     call ESMF_LogWrite("User initialize routine InitP0 Atm finished", ESMF_LOGMSG_INFO)
 
   end subroutine InitializeP0
@@ -188,7 +182,10 @@ module DAtm
    
     call ESMF_LogWrite("User initialize routine InitP1 Atm started", ESMF_LOGMSG_INFO)
 
-    call AtmFieldsAdvertise(exportState, AtmFieldsToExport, rc)
+    ! Set up the fields in the AtmBundle
+    call AtmBundleSetUp
+
+    call AtmFieldsAdvertise(exportState, AtmBundleFields, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   !-----------------------------------------------------------------------------
@@ -271,6 +268,7 @@ module DAtm
     type(ESMF_Grid)         :: gridOut
     type(ESMF_Field)        :: field
     character(ESMF_MAXSTR)  :: msgString
+    character(ESMF_MAXSTR)  :: fname
 
     integer :: ii, nfields
 
@@ -291,16 +289,35 @@ module DAtm
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
 
-    call AtmGridSetUp(gridIn,petCnt,'Atm grid','InitP2 Atm',rc)
+    fname = trim(dirpath)//trim(filename_base)//'SCRIP.nc'
+    call ESMF_LogWrite('reading grid file '//trim(fname), ESMF_LOGMSG_INFO)
+
+    gridIn = ESMF_GridCreate(filename=trim(fname),&
+                             fileformat = ESMF_FILEFORMAT_SCRIP, &
+                             addCornerStagger=.true., &
+                             indexflag=AtmIndexType, &
+                             addMask=.true.,rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
     gridOut = gridIn ! for now out same as in
 
-    call AtmFieldsRealize(exportState, gridOut, AtmFieldsToExport, 'Atm Export', rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    ! Write coords and mask to file
+    call WriteCoord(gridIn, ESMF_STAGGERLOC_CENTER, 1, 'atmlonc', lPet, rc)
+    call WriteCoord(gridIn, ESMF_STAGGERLOC_CENTER, 2, 'atmlatc', lPet, rc)
+    call WriteCoord(gridIn, ESMF_STAGGERLOC_CORNER, 1, 'atmlonq', lPet, rc)
+    call WriteCoord(gridIn, ESMF_STAGGERLOC_CORNER, 2, 'atmlatq', lPet, rc)
+
+    call WriteMask(gridIn, ESMF_STAGGERLOC_CENTER, 'atmmask', lPet, rc)
 
     ! Attach the grid to the Component
     call ESMF_GridCompSet(model, grid=gridOut, rc=rc)
-
     !call ESMF_GridCompPrint(model, rc=rc)
+
+    ! Create and fill the AtmBundle
+    call    AtmBundleCreate(model, importState, exportState, rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    call AtmFieldsRealize(exportState, gridOut, AtmBundleFields, 'Atm Export', rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call AtmInit(model, importState, exportState, externalClock, rc)
 
@@ -309,17 +326,17 @@ module DAtm
     ! -> set Updated Field Attribute to "true", indicating to the IPDv02p5
     ! generic code to set the timestamp for this Field
 
-    nfields = size(AtmFieldsToExport)
+    nfields = size(AtmBundleFields)
     do ii = 1,nfields
       call ESMF_StateGet(exportState, &
                          field=field, &
-                         itemName=trim(AtmFieldsToExport(ii)%field_name), rc=rc)
+                         itemName=trim(AtmBundleFields(ii)%field_name), rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       call NUOPC_SetAttribute(field, name="Updated", value="true", rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      call ESMF_LogWrite(trim(AtmFieldsToExport(ii)%field_name)//' set to Updated', ESMF_LOGMSG_INFO)
+      call ESMF_LogWrite(trim(AtmBundleFields(ii)%field_name)//' set to Updated', ESMF_LOGMSG_INFO)
     enddo !ii
 
     ! the component needs to indicate that it is fully done with
@@ -331,6 +348,8 @@ module DAtm
                                 value="true", rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call ESMF_LogWrite('Atm InitializeDataComplete', ESMF_LOGMSG_INFO)
+
+    call AtmFieldCheck(importState, exportState, 'InitP2 Atm', rc)
 
     call ESMF_LogWrite("User initialize routine InitP2 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -388,7 +407,8 @@ module DAtm
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
     call ESMF_ClockGet(modelClock, currTime=currTime, timeStep=timeStep, rc=rc)
 
-    call ESMF_TimeGet(currTime+timestep, timestring=export_timestr, rc=rc)
+    ! TODO: why is this the export time?
+    call ESMF_TimeGet(currTime, timestring=export_timestr, rc=rc)
 
     ! Run the component
     call AtmRun(model, importState, exportState, modelClock, rc)
