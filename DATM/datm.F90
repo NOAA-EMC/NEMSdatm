@@ -330,13 +330,13 @@ module DAtm
     do ii = 1,nfields
       call ESMF_StateGet(exportState, &
                          field=field, &
-                         itemName=trim(AtmBundleFields(ii)%field_name), rc=rc)
+                         itemName=trim(AtmBundleFields(ii)%shortname), rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       call NUOPC_SetAttribute(field, name="Updated", value="true", rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      call ESMF_LogWrite(trim(AtmBundleFields(ii)%field_name)//' set to Updated', ESMF_LOGMSG_INFO)
+      call ESMF_LogWrite(trim(AtmBundleFields(ii)%shortname)//' set to Updated', ESMF_LOGMSG_INFO)
     enddo !ii
 
     ! the component needs to indicate that it is fully done with

@@ -40,13 +40,19 @@ module AtmFieldUtils
     rc = ESMF_SUCCESS
 
   ! number of items
-    nfields = size(field_defs)
-  !print *,'found nfields = ',nfields,' to advertise ',field_defs%field_name
-
+   nfields = size(field_defs)
+    
+    ! create a shortname == standard_name for the fields in the state
     do ii = 1,nfields
+       field_defs(ii)%shortname = trim(trim(field_defs(ii)%standard_name))
+
+      call ESMF_LogWrite("Advertise Field "// &
+       trim(field_defs(ii)%standard_name)//" : "// &
+       trim(field_defs(ii)%shortname), ESMF_LOGMSG_INFO)
+
       call NUOPC_Advertise(state, &
         StandardName=trim(field_defs(ii)%standard_name), &
-                name=trim(field_defs(ii)%field_name), &
+                name=trim(field_defs(ii)%shortname), &
                   rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
     enddo
@@ -87,15 +93,10 @@ module AtmFieldUtils
                                arrayspec=arrayspecR8, &
                                indexflag=AtmIndexType, &
                                staggerloc=staggerloc, &
-                               name=trim(field_defs(ii)%field_name), rc=rc)
+                               name=trim(field_defs(ii)%shortname), rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      connected = NUOPC_IsConnected(state, fieldName=trim(field_defs(ii)%field_name), rc=rc)
-      if(     connected)write(msgString,*)'Field '//trim(field_defs(ii)%field_name)//' is connected '
-      if(.not.connected)write(msgString,*)'Field '//trim(field_defs(ii)%field_name)//' is NOT connected '
-      call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
-
-      call NUOPC_Realize(state, field=field, rc=rc)
+      call NUOPC_Realize(state, grid, rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       call ESMF_FieldGet(field, farrayPtr=field_defs(ii)%farrayPtr, rc=rc)
@@ -138,7 +139,7 @@ module AtmFieldUtils
   nfields = size(AtmBundleFields)
   do ii = 1,nfields
     call ESMF_StateGet(exportState, &
-                       itemName=trim(AtmBundleFields(ii)%field_name), &
+                       itemName=trim(AtmBundleFields(ii)%shortname), &
                        field=field, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
@@ -146,19 +147,19 @@ module AtmFieldUtils
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     !write (msgString,*)trim(tag), ' AtmBundleFields ',&
-    !                   trim(AtmBundleFields(ii)%field_name),'  ',&
+    !                   trim(AtmBundleFields(ii)%shortname),'  ',&
     !                   real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4)
     !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
     !ijloc = maxloc(abs(AtmBundleFields(ii)%farrayPtr))
     !write (msgString,*)trim(tag), ' AtmBundleFields ',&
-    !                   trim(AtmBundleFields(ii)%field_name),' maxloc ',&
+    !                   trim(AtmBundleFields(ii)%shortname),' maxloc ',&
     !                   ijloc(1),ijloc(2),&
     !                   real(AtmBundleFields(ii)%farrayPtr(ijloc(1),ijloc(2)),4)
     !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
     write (msgString,*)trim(tag), ' AtmBundleFields ',&
-                       trim(AtmBundleFields(ii)%field_name),' min,max,sum ',&
+                       trim(AtmBundleFields(ii)%shortname),' min,max,sum ',&
                        minval(real(AtmBundleFields(ii)%farrayPtr,4)),&
                        maxval(real(AtmBundleFields(ii)%farrayPtr,4)),&
                           sum(real(AtmBundleFields(ii)%farrayPtr,4))
@@ -190,13 +191,12 @@ module AtmFieldUtils
 
   call ESMF_LogWrite("User routine AtmFieldDump started", ESMF_LOGMSG_INFO)
 
-  ! Atm variables in exportState
   nfields = size(AtmBundleFields)
   do ii = 1,nfields
    call ESMF_StateGet(exportState, &
-                      itemName = trim(AtmBundleFields(ii)%field_name), &
+                      itemName = trim(AtmBundleFields(ii)%shortname), &
                       field=field,rc=rc)
-    varname = trim(AtmBundleFields(ii)%standard_name)
+    varname = trim(AtmBundleFields(ii)%shortname)
 
     if(trim(tag) .eq. 'before AtmRun')filename = 'field_atm_exportb_'//trim(timestr)//'.nc'
     if(trim(tag) .eq.  'after AtmRun')filename = 'field_atm_exporta_'//trim(timestr)//'.nc'
@@ -356,7 +356,7 @@ module AtmFieldUtils
   nfields = size(AtmBundleFields)
   do ii = 1,nfields
     call ESMF_StateGet(exportState, &
-                       itemName=trim(AtmBundleFields(ii)%field_name), &
+                       itemName=trim(AtmBundleFields(ii)%shortname), &
                        field=field, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
@@ -405,7 +405,7 @@ module AtmFieldUtils
     !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
     write (msgString,*)' AtmIntp ',&
-                       trim(AtmBundleFields(ii)%field_name),&
+                       trim(AtmBundleFields(ii)%shortname),&
                        real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4),&
                        real(AtmBundleFields(ii)%farrayPtr_bak(iprnt,jprnt),4),&
                        real(AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt),4)

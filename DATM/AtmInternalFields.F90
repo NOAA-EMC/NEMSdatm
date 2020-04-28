@@ -33,6 +33,7 @@ module AtmInternalFields
   ! and the file_varname is the name of the variable in the source file
   type, public :: AtmField_Definition
     character(len=64)                                :: standard_name
+    character(len=64)                                :: shortname
     character(len=12)                                :: field_name
     character(len=12)                                :: file_varname
     character(len=12)                                :: unit_name
@@ -92,6 +93,8 @@ module AtmInternalFields
   AtmBundleFields(:)%staggertype = 'center'
   ! field availability will be set using data_table.IN
   !AtmBundleFields(:)%isPresent   = .true.
+  ! used to set the field name in the exportState = standard_name
+  AtmBundleFields(:)%shortname = ' '
 
     ii = 0
   !-----------------------------------------------------------------------------
