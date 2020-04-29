@@ -129,8 +129,13 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
        if(trim(AtmBundleFields(iii)%standard_name) ==   'mean_up_lw_flx')iiu = iii
       enddo
 
-      AtmBundleFields(ii)%farrayPtr_fwd = AtmBundleFields(iid)%farrayPtr_fwd  &
-                                        - AtmBundleFields(iiu)%farrayPtr_fwd 
+      if(iiu .eq. 0 .or. iid .eq. 0)then
+       call ESMF_LogWrite('Cannot create field '//trim(varname), ESMF_LOGMSG_INFO)
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
+      else
+       AtmBundleFields(ii)%farrayPtr_fwd = AtmBundleFields(iid)%farrayPtr_fwd  &
+                                         - AtmBundleFields(iiu)%farrayPtr_fwd
+      endif
     endif
    endif !not present
   enddo
