@@ -21,6 +21,8 @@ subroutine AtmBundleCreate(gcomp,importState, exportState, rc)
 
   character(len=ESMF_MAXSTR)    :: aname, fnameb, fnamef
   character(len=ESMF_MAXSTR)    :: msgString
+  character(len=*),parameter    :: u_FILE_u = &
+     __FILE__
 
   ! Initialize return code
   rc = ESMF_SUCCESS
@@ -87,7 +89,7 @@ subroutine AtmBundleCreate(gcomp,importState, exportState, rc)
 
    write(msgString,'(i4,2a14,a16,2a14,a16)')ii,' added field ',trim(fnameb),' to AtmBundleBak', &
                                                '   and field ',trim(fnamef),' to AtmBundleFwd'
-   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
   enddo
 
   call ESMF_LogWrite("User init routine AtmBundleCreate finished", ESMF_LOGMSG_INFO)

@@ -6,9 +6,7 @@ module AtmFieldUtils
   use ESMF
   use NUOPC
 
-  use AtmInternalFields, only : AtmField_Definition
-  use AtmInternalFields, only : AtmIndexType
-  use AtmExportFields,   only : AtmFieldsToExport
+  use AtmInternalFields
 
   implicit none
 
@@ -22,6 +20,9 @@ module AtmFieldUtils
   ! called by AtmInit, AtmRun
   public :: AtmForceFwd2Bak, AtmBundleCheck
   public :: AtmBundleIntp
+
+  character(len=*),parameter :: u_FILE_u = &
+     __FILE__
 
   contains
 
@@ -39,18 +40,21 @@ module AtmFieldUtils
     rc = ESMF_SUCCESS
 
   ! number of items
-    nfields = size(field_defs)
-  !print *,'found nfields = ',nfields,' to advertise ',field_defs%field_name
-
+   nfields = size(field_defs)
+    
+    ! create a shortname == standard_name for the fields in the state
     do ii = 1,nfields
+       field_defs(ii)%shortname = trim(trim(field_defs(ii)%standard_name))
+
+      call ESMF_LogWrite("Advertise Field "// &
+       trim(field_defs(ii)%standard_name)//" : "// &
+       trim(field_defs(ii)%shortname), ESMF_LOGMSG_INFO)
+
       call NUOPC_Advertise(state, &
         StandardName=trim(field_defs(ii)%standard_name), &
-                name=trim(field_defs(ii)%field_name), &
+                name=trim(field_defs(ii)%shortname), &
                   rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__)) &
-        return  ! bail out
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
     enddo
 
   end subroutine AtmFieldsAdvertise
@@ -89,28 +93,14 @@ module AtmFieldUtils
                                arrayspec=arrayspecR8, &
                                indexflag=AtmIndexType, &
                                staggerloc=staggerloc, &
-                               name=trim(field_defs(ii)%field_name), rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__)) &
-        return  ! bail out
+                               name=trim(field_defs(ii)%shortname), rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      connected = NUOPC_IsConnected(state, fieldName=trim(field_defs(ii)%field_name), rc=rc)
-      if(     connected)write(msgString,*)'Field '//trim(field_defs(ii)%field_name)//' is connected '
-      if(.not.connected)write(msgString,*)'Field '//trim(field_defs(ii)%field_name)//' is NOT connected '
-      call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-
-      call NUOPC_Realize(state, field=field, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__)) &
-        return  ! bail out
+      call NUOPC_Realize(state, grid, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       call ESMF_FieldGet(field, farrayPtr=field_defs(ii)%farrayPtr, rc=rc)
-      if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-        line=__LINE__, &
-        file=__FILE__)) &
-        return  ! bail out
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       field_defs(ii)%farrayPtr = 0.0
       !do j = lbound(field_defs(ii)%farrayPtr,2),ubound(field_defs(ii)%farrayPtr,2)
@@ -146,52 +136,46 @@ module AtmFieldUtils
   ! Check Fields
   !-----------------------------------------------------------------------------
 
-  nfields = size(AtmFieldsToExport)
+  nfields = size(AtmBundleFields)
   do ii = 1,nfields
     call ESMF_StateGet(exportState, &
-                       itemName=trim(AtmFieldsToExport(ii)%field_name), &
+                       itemName=trim(AtmBundleFields(ii)%shortname), &
                        field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call ESMF_FieldGet(field, farrayPtr=AtmFieldsToExport(ii)%farrayPtr, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    call ESMF_FieldGet(field, farrayPtr=AtmBundleFields(ii)%farrayPtr, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    write (msgString,*)trim(tag), ' AtmFieldsToExport ',&
-                       trim(AtmFieldsToExport(ii)%field_name),'  ',&
-                       real(AtmFieldsToExport(ii)%farrayPtr(iprnt,jprnt),4)
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    !write (msgString,*)trim(tag), ' AtmBundleFields ',&
+    !                   trim(AtmBundleFields(ii)%shortname),'  ',&
+    !                   real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4)
+    !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
-    !ijloc = maxloc(abs(AtmFieldsToExport(ii)%farrayPtr))
-    !write (msgString,*)trim(tag), ' AtmFieldsToExport ',&
-    !                   trim(AtmFieldsToExport(ii)%field_name),' maxloc ',&
+    !ijloc = maxloc(abs(AtmBundleFields(ii)%farrayPtr))
+    !write (msgString,*)trim(tag), ' AtmBundleFields ',&
+    !                   trim(AtmBundleFields(ii)%shortname),' maxloc ',&
     !                   ijloc(1),ijloc(2),&
-    !                   real(AtmFieldsToExport(ii)%farrayPtr(ijloc(1),ijloc(2)),4)
-    !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    !                   real(AtmBundleFields(ii)%farrayPtr(ijloc(1),ijloc(2)),4)
+    !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
-    write (msgString,*)trim(tag), ' AtmFieldsToExport ',&
-                       trim(AtmFieldsToExport(ii)%field_name),' min,max,sum ',&
-                       minval(real(AtmFieldsToExport(ii)%farrayPtr,4)),&
-                       maxval(real(AtmFieldsToExport(ii)%farrayPtr,4)),&
-                          sum(real(AtmFieldsToExport(ii)%farrayPtr,4))
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    write (msgString,*)trim(tag), ' AtmBundleFields ',&
+                       trim(AtmBundleFields(ii)%shortname),' min,max,sum ',&
+                       minval(real(AtmBundleFields(ii)%farrayPtr,4)),&
+                       maxval(real(AtmBundleFields(ii)%farrayPtr,4)),&
+                          sum(real(AtmBundleFields(ii)%farrayPtr,4))
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
    enddo
 
   end subroutine AtmFieldCheck
 
   !-----------------------------------------------------------------------------
 
-  subroutine AtmFieldDump(importState, exportState, tag, iicnt, rc)
+  subroutine AtmFieldDump(importState, exportState, tag, timestr, rc)
 
   type(ESMF_State)              :: importState
   type(ESMF_State)              :: exportState
   character(len=*), intent( in) :: tag
-           integer, intent( in) :: iicnt
+  character(len=*), intent( in) :: timestr
            integer, intent(out) :: rc
 
   ! Local variables
@@ -207,31 +191,28 @@ module AtmFieldUtils
 
   call ESMF_LogWrite("User routine AtmFieldDump started", ESMF_LOGMSG_INFO)
 
-  ! Atm variables in exportState
-  nfields = size(AtmFieldsToExport)
+  nfields = size(AtmBundleFields)
   do ii = 1,nfields
    call ESMF_StateGet(exportState, &
-                      itemName = trim(AtmFieldsToExport(ii)%field_name), &
+                      itemName = trim(AtmBundleFields(ii)%shortname), &
                       field=field,rc=rc)
-    varname = trim(AtmFieldsToExport(ii)%standard_name)
+    varname = trim(AtmBundleFields(ii)%shortname)
 
-    if(trim(tag) .eq. 'before AtmRun')filename = 'field_atm_exportb_'//trim(varname)//'.nc'
-    if(trim(tag) .eq.  'after AtmRun')filename = 'field_atm_exporta_'//trim(varname)//'.nc'
+    if(trim(tag) .eq. 'before AtmRun')filename = 'field_atm_exportb_'//trim(timestr)//'.nc'
+    if(trim(tag) .eq.  'after AtmRun')filename = 'field_atm_exporta_'//trim(timestr)//'.nc'
 
-    !if(trim(varname) .eq. 'inst_pres_height_lowest')then
     write(msgString, '(a,i6)')'Writing exportState field '//trim(varname)//' to ' &
-                            //trim(filename)//' iicnt = ',iicnt
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+                            //trim(filename)
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
     call ESMF_FieldWrite(field, &
-                         fileName=filename, &
-                         variableName=varname, &
-                         overwrite=.true., &
-                         timeslice=iicnt,rc=rc)
+                         fileName =trim(filename), &
+                         timeslice=1, &
+                         overwrite=.true., rc=rc)
     !endif
     !if(iicnt .eq. 1)then
     ! write(msgString, *)'Writing exportState field ',trim(varname),' to ',trim(filename)
-    ! call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    ! call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
     !endif
   enddo
   call ESMF_LogWrite("User routine AtmFieldDump finished", ESMF_LOGMSG_INFO)
@@ -268,26 +249,17 @@ module AtmFieldUtils
     call ESMF_FieldBundleGet(AtmBundleFwd, & 
                              fieldName=trim(fnamefwd), &
                              field=fieldfwd,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldBundleGet(AtmBundleBak, &
                              fieldName=trim(fnamebak), &
                              field=fieldbak,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! copy the fwd fields to the bak fields
     ! this function is defined (fieldout,fieldin)
     call ESMF_FieldCopy(fieldbak, fieldfwd, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
   enddo
 
   call ESMF_LogWrite("User routine AtmForceFwd2Bak finished", ESMF_LOGMSG_INFO)
@@ -325,30 +297,18 @@ module AtmFieldUtils
     call ESMF_FieldBundleGet(AtmBundleBak, & 
                              fieldName=trim(fnamebak), &
                              field=fieldbak,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
   
     call ESMF_FieldGet(fieldbak,farrayPtr=AtmBundleFields(ii)%farrayPtr_bak,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldBundleGet(AtmBundleFwd, &
                              fieldName=trim(fnamefwd), &
                              field=fieldfwd,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldGet(fieldfwd,farrayPtr=AtmBundleFields(ii)%farrayPtr_fwd,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
  
      write(msgString,'(i4,2(a2,a12),2f14.5)')ii,'  ',trim(fnamebak), &
                                                 '  ',trim(fnamefwd), &
@@ -356,7 +316,7 @@ module AtmFieldUtils
                                 AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt)
     !                            AtmBundleFields(ii)%farrayPtr_bak(152,60), &
     !                            AtmBundleFields(ii)%farrayPtr_fwd(152,60)
-     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
   enddo
 
   call ESMF_LogWrite("User routine AtmBundleCheck finished", ESMF_LOGMSG_INFO)
@@ -367,8 +327,6 @@ module AtmFieldUtils
 
   subroutine AtmBundleIntp(gcomp, importState, exportState, externalClock, hour, rc)
 
-  use AtmExportFields
-  
   use AtmInternalFields, only : hfwd,hbak
   use AtmInternalFields, only : iprnt,jprnt
   use AtmInternalFields, only : AtmBundleFields
@@ -395,88 +353,70 @@ module AtmFieldUtils
 
   call ESMF_LogWrite("User routine AtmBundleIntp  started", ESMF_LOGMSG_INFO)
 
-  nfields = size(AtmFieldsToExport)
+  nfields = size(AtmBundleFields)
   do ii = 1,nfields
     call ESMF_StateGet(exportState, &
-                       itemName=trim(AtmFieldsToExport(ii)%field_name), &
+                       itemName=trim(AtmBundleFields(ii)%shortname), &
                        field=field, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call ESMF_FieldGet(field, farrayPtr=AtmFieldsToExport(ii)%farrayPtr, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    call ESMF_FieldGet(field, farrayPtr=AtmBundleFields(ii)%farrayPtr, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! get the corresponding _fwd and _bak fields
-    fnamefwd = trim(AtmFieldsToExport(ii)%field_name)//'_fwd'
-    fnamebak = trim(AtmFieldsToExport(ii)%field_name)//'_bak'
+    fnamefwd = trim(AtmBundleFields(ii)%field_name)//'_fwd'
+    fnamebak = trim(AtmBundleFields(ii)%field_name)//'_bak'
 
     call ESMF_FieldBundleGet(AtmBundleFwd, & 
                              fieldName=trim(fnamefwd), &
                              field=fieldfwd,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldGet(fieldfwd,farrayPtr=AtmBundleFields(ii)%farrayPtr_fwd,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldBundleGet(AtmBundleBak, &
                              fieldName=trim(fnamebak), &
                              field=fieldbak,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_FieldGet(fieldbak,farrayPtr=AtmBundleFields(ii)%farrayPtr_bak,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
    !special case at initialization
    if(int(hour,4) .eq. 0)then
-    AtmFieldsToExport(ii)%farrayPtr = real(AtmBundleFields(ii)%farrayPtr_bak,8)
+    AtmBundleFields(ii)%farrayPtr = real(AtmBundleFields(ii)%farrayPtr_bak,8)
    else
     ! interpolate in time
       wf = hfwd - hour
       wb = hour - hbak
     wtot = wf+wb
-    AtmFieldsToExport(ii)%farrayPtr = real((wf*AtmBundleFields(ii)%farrayPtr_bak &
-                                         +  wb*AtmBundleFields(ii)%farrayPtr_fwd)/wtot,8)
+    AtmBundleFields(ii)%farrayPtr = (wf*real(AtmBundleFields(ii)%farrayPtr_bak,8) &
+                                  +  wb*real(AtmBundleFields(ii)%farrayPtr_fwd,8))/wtot
    endif !hour=0
 
-    !ijloc = maxloc(abs(AtmFieldsToExport(ii)%farrayPtr))
+    !ijloc = maxloc(abs(AtmBundleFields(ii)%farrayPtr))
     !write (msgString,*)' AtmIntp ',&
-    !                   trim(AtmFieldsToExport(ii)%field_name),' maxloc ',&
+    !                   trim(AtmBundleFields(ii)%field_name),' maxloc ',&
     !                   ijloc(1),ijloc(2),&
-    !                   real(AtmFieldsToExport(ii)%farrayPtr(ijloc(1),ijloc(2)),4),&
+    !                   real(AtmBundleFields(ii)%farrayPtr(ijloc(1),ijloc(2)),4),&
     !                   real(AtmBundleFields(ii)%farrayPtr_bak(ijloc(1),ijloc(2)),4),&
     !                   real(AtmBundleFields(ii)%farrayPtr_fwd(ijloc(1),ijloc(2)),4)
-    !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
     write (msgString,*)' AtmIntp ',&
-                       trim(AtmFieldsToExport(ii)%field_name),&
-                       real(AtmFieldsToExport(ii)%farrayPtr(iprnt,jprnt),4),&
+                       trim(AtmBundleFields(ii)%shortname),&
+                       real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4),&
                        real(AtmBundleFields(ii)%farrayPtr_bak(iprnt,jprnt),4),&
                        real(AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt),4)
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
-    !write (msgString,*)' AtmFieldsToExport ',&
-    !                   trim(AtmFieldsToExport(ii)%field_name),' min,max,sum ',&
-    !                   minval(real(AtmFieldsToExport(ii)%farrayPtr,4)),&
-    !                   maxval(real(AtmFieldsToExport(ii)%farrayPtr,4)),&
-    !                      sum(real(AtmFieldsToExport(ii)%farrayPtr,4))
-    ! call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
+    !write (msgString,*)' AtmBundleFields ',&
+    !                   trim(AtmBundleFields(ii)%field_name),' min,max,sum ',&
+    !                   minval(real(AtmBundleFields(ii)%farrayPtr,4)),&
+    !                   maxval(real(AtmBundleFields(ii)%farrayPtr,4)),&
+    !                      sum(real(AtmBundleFields(ii)%farrayPtr,4))
+    ! call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
    enddo
 
   call ESMF_LogWrite("User routine AtmBundleIntp finished", ESMF_LOGMSG_INFO)

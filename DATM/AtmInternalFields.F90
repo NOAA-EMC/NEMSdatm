@@ -6,6 +6,11 @@ module AtmInternalFields
 
   implicit none
 
+  public :: ChkErr
+
+  character(len=*),parameter :: u_FILE_u = &
+     __FILE__
+
   private
 
   !from model_configure
@@ -28,14 +33,17 @@ module AtmInternalFields
   ! and the file_varname is the name of the variable in the source file
   type, public :: AtmField_Definition
     character(len=64)                                :: standard_name
+    character(len=64)                                :: shortname
     character(len=12)                                :: field_name
     character(len=12)                                :: file_varname
     character(len=12)                                :: unit_name
     character(len=10)                                :: staggertype
               logical                                :: isPresent
-    real(kind=ESMF_KIND_R8), dimension(:,:), pointer :: farrayPtr     => null()
-    real(kind=ESMF_KIND_R4), dimension(:,:), pointer :: farrayPtr_bak => null()
-    real(kind=ESMF_KIND_R4), dimension(:,:), pointer :: farrayPtr_fwd => null()
+    ! for export
+    real(kind=ESMF_KIND_R8), dimension(:,:), pointer :: farrayPtr
+    ! for forcing data, two time levels
+    real(kind=ESMF_KIND_R4), dimension(:,:), pointer :: farrayPtr_bak
+    real(kind=ESMF_KIND_R4), dimension(:,:), pointer :: farrayPtr_fwd
   end type AtmField_Definition
 
   ! Field Bundles for Atm model used for time-interpolation of forcing
@@ -44,6 +52,7 @@ module AtmInternalFields
 
   integer, parameter, public :: AtmFieldCount =  6  & !height lowest
                                               +  3  & !swd,lwd,lwup
+                                              +  1  & !net lw
                                               +  4  & !momentum,sens,lat
                                               +  4  & !vis,ir,dir,dif
                                               +  3    !ps,prec
@@ -84,6 +93,8 @@ module AtmInternalFields
   AtmBundleFields(:)%staggertype = 'center'
   ! field availability will be set using data_table.IN
   !AtmBundleFields(:)%isPresent   = .true.
+  ! used to set the field name in the exportState = standard_name
+  AtmBundleFields(:)%shortname = ' '
 
     ii = 0
   !-----------------------------------------------------------------------------
@@ -91,20 +102,22 @@ module AtmInternalFields
   !-----------------------------------------------------------------------------
 
     ii = ii + 1
-    AtmBundleFields(ii)%standard_name = 'mean_zonal_moment_flx'
+    AtmBundleFields(ii)%standard_name = 'mean_zonal_moment_flx_atm'
     AtmBundleFields(ii)%field_name    = 'Dusfc'
     AtmBundleFields(ii)%file_varname  = 'dusfc'
     AtmBundleFields(ii)%unit_name     = 'N/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
-    AtmBundleFields(ii)%standard_name = 'mean_merid_moment_flx'
+    AtmBundleFields(ii)%standard_name = 'mean_merid_moment_flx_atm'
     AtmBundleFields(ii)%field_name    = 'Dvsfc'
     AtmBundleFields(ii)%file_varname  = 'dvsfc'
     AtmBundleFields(ii)%unit_name     = 'N/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
   !-----------------------------------------------------------------------------
   !
@@ -117,6 +130,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'K'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'inst_temp_height_lowest'
@@ -125,6 +139,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'K'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'inst_spec_humid_height_lowest'
@@ -133,6 +148,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'kg/kg'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'inst_zonal_wind_height_lowest'
@@ -141,6 +157,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'm/s'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'inst_merid_wind_height_lowest'
@@ -149,6 +166,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'm/s'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'inst_pres_height_lowest'
@@ -157,6 +175,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'Pa'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
   !-----------------------------------------------------------------------------
   !
@@ -169,6 +188,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'mean_down_lw_flx'
@@ -177,6 +197,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'mean_up_lw_flx'
@@ -185,6 +206,17 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+    ! created from DLWRF-ULWRF in AtmForce
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'mean_net_lw_flx'
+    AtmBundleFields(ii)%field_name    = 'Nlwrf'
+    AtmBundleFields(ii)%file_varname  = ' '
+    AtmBundleFields(ii)%unit_name     = 'W/m2'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
   !-----------------------------------------------------------------------------
   !
@@ -197,6 +229,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'mean_laten_heat_flx'
@@ -205,6 +238,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
   !-----------------------------------------------------------------------------
   !
@@ -217,6 +251,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'mean_down_sw_vis_dif_flx'
@@ -225,6 +260,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'mean_down_sw_ir_dir_flx'
@@ -233,6 +269,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
     
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'mean_down_sw_ir_dif_flx'
@@ -241,6 +278,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'W/m2'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
   !-----------------------------------------------------------------------------
   !
@@ -253,6 +291,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'Pa'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'mean_prec_rate'
@@ -261,6 +300,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'kg/m2/s'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     ii = ii + 1
     AtmBundleFields(ii)%standard_name = 'mean_fprec_rate'
@@ -269,6 +309,7 @@ module AtmInternalFields
     AtmBundleFields(ii)%unit_name     = 'kg/m2/s'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
 
     if(ii .ne. size(AtmBundleFields)) &
     call ESMF_LogWrite("ERROR: check # AtmBundleFields", ESMF_LOGMSG_INFO)
@@ -278,26 +319,17 @@ module AtmInternalFields
   !-----------------------------------------------------------------------------
 
     cfdata=ESMF_ConfigCreate(rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_ConfigLoadFile(config=cfdata ,filename='datm_data_table' ,rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     nfields = size(AtmBundleFields)
     do ii = 1,nfields
      call ESMF_ConfigGetAttribute(config=cfdata, &
                                   value=lvalue, &
                                   label=trim(AtmBundleFields(ii)%standard_name),rc=rc)
-     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-       line=__LINE__, &
-       file=__FILE__)) &
-       return  ! bail out
+     if (ChkErr(rc,__LINE__,u_FILE_u)) return
      AtmBundleFields(ii)%isPresent=lvalue
     enddo
 
@@ -316,4 +348,17 @@ module AtmInternalFields
     enddo
 
   end subroutine AtmBundleSetUp
+
+  logical function ChkErr(rc, line, file)
+    integer, intent(in) :: rc
+    integer, intent(in) :: line
+    character(len=*), intent(in) :: file
+    integer :: lrc
+    chkerr = .false.
+    lrc = rc
+    if (ESMF_LogFoundError(rcToCheck=lrc, msg=ESMF_LOGERR_PASSTHRU, line=line, file=file)) then
+     chkerr = .true.
+    endif
+  end function ChkErr
+
 end module AtmInternalFields

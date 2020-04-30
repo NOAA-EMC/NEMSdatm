@@ -53,17 +53,15 @@ nuopc: datm.mk
 nuopcinstall: install
 
 # ------------------------------------------------------------------------------
-AtmOBJS=datm.o AtmInternalFields.o AtmExportFields.o AtmImportFields.o AtmFieldUtils.o AtmGridUtils.o AtmForce.o AtmGridSetUp.o AtmModel.o LocalDefs.o AtmBundleCreate.o
+AtmOBJS=datm.o AtmInternalFields.o AtmFieldUtils.o AtmForce.o AtmModel.o LocalDefs.o AtmBundleCreate.o AtmGridUtils.o
 
 datm.o: $(AtmOBJS)
 
-datm.o: AtmExportFields.o AtmModel.o AtmFieldUtils.o
+datm.o: AtmModel.o AtmFieldUtils.o AtmGridUtils.o
 AtmModel.o: AtmFieldUtils.o
-AtmForce.o: AtmExportFields.o
-AtmGridSetUp.o: AtmExportFields.o AtmGridUtils.o
+AtmForce.o: AtmInternalFields.o
 AtmBundleCreate.o : AtmInternalFields.o
-AtmFieldUtils.o : AtmInternalFields.o AtmImportFields.o AtmExportFields.o
-AtmImportFields.o : AtmInternalFields.o
+AtmFieldUtils.o : AtmInternalFields.o
 AtmExportFields.o : AtmInternalFields.o
 # -----------------------------------------------------------------------------
 .PRECIOUS: %.o
