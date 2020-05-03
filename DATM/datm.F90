@@ -225,7 +225,6 @@ module DAtm
     write(msgString,'(a,i6)')'Model configure found with nfhout = ',nfhout
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
 
-
     call ESMF_ConfigGetAttribute(config=cf, &
                                  value=filename_base, &
                                  label='filename_base:',rc=rc)
@@ -395,20 +394,24 @@ module DAtm
                        currTime=currTime, &
                        startTime=startTime, &
                        stopTime=stopTime, &
+                       timeStep=timeStep, &
                        rc=rc)
 
-    call ESMF_ClockPrint(modelClock, options="currTime", &
+    call ESMF_TimePrint(currTime, &
          preString="ModelAdvance DATM with CLOCK current:   ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
-    call ESMF_ClockPrint(modelClock, options="stopTime", &
+    call ESMF_TimePrint(currTime + timeStep, &
+         preString="ModelAdvance DATM with CLOCK advance to: ", &
+         unit=msgString, rc=rc)
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+    call ESMF_TimePrint(stopTime, &
          preString="ModelAdvance DATM with CLOCK stop:   ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
-    call ESMF_ClockGet(modelClock, currTime=currTime, timeStep=timeStep, rc=rc)
 
-    ! TODO: why is this the export time?
-    call ESMF_TimeGet(currTime, timestring=export_timestr, rc=rc)
+    call ESMF_TimeGet(currTime+timestep, timestring=export_timestr, rc=rc)
+    call ESMF_LogWrite(trim(export_timestr), ESMF_LOGMSG_INFO)
 
     ! Run the component
     call AtmRun(model, importState, exportState, modelClock, rc)
@@ -426,39 +429,6 @@ module DAtm
 
   end subroutine ModelAdvance
 
-  ! like cice_cap, which had the simplest clock settings I could find
-  !-----------------------------------------------------------------------------
-
-  subroutine SetClock(model, rc)
-
-    type(ESMF_GridComp)  :: model
-    integer, intent(out) :: rc
-    
-    ! local variables
-    type(ESMF_Clock)              :: clock
-    type(ESMF_TimeInterval)       :: stabilityTimeStep, timeStep
-
-    rc = ESMF_SUCCESS
-    
-    ! query the Component for its clock
-    call ESMF_GridCompGet(model, clock=clock, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
-    call ESMF_TimeIntervalSet(timestep, s_r8=dt_atmos, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
-    call ESMF_ClockSet(clock, timestep=timestep, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-      
-    ! initialize internal clock
-    ! here: parent Clock and stability timeStep determine actual model timeStep
-    call ESMF_TimeIntervalSet(stabilityTimeStep, s_r8=dt_atmos, rc=rc) 
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call NUOPC_CompSetClock(model, clock, stabilityTimeStep, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    
-  end subroutine SetClock
-
   !-----------------------------------------------------------------------------
 
   subroutine SetRunClock(model, rc)
@@ -468,10 +438,13 @@ module DAtm
 
     ! local variables
     type(ESMF_Clock)           :: modelClock, driverClock
-    type(ESMF_Time)            :: currTime
-    type(ESMF_TimeInterval)    :: timeStep
+    type(ESMF_Time)            :: mcurrtime, dcurrtime
+    type(ESMF_Time)            :: mstoptime, dstoptime
+    type(ESMF_TimeInterval)    :: mtimestep, dtimestep
 
+    character(len=ESMF_MAXSTR) :: mtimestring, dtimestring
     character(len=ESMF_MAXSTR) :: msgString
+    character(len=ESMF_MAXSTR) :: subname = "SetRunClock"
 
     rc = ESMF_SUCCESS
 #ifndef coupled
@@ -485,36 +458,40 @@ module DAtm
                         driverClock=driverClock, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    ! set the modelClock to have the current start time as the driverClock
-    call ESMF_ClockGet(driverClock, currTime=currTime, timeStep=timeStep, rc=rc)
+    call ESMF_ClockGet(driverClock, currTime=dcurrtime, timeStep=dtimestep, &
+                       stopTime=dstoptime, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call ESMF_TimeIntervalSet(timestep, s_r8=dt_atmos, rc=rc)
+    call ESMF_ClockGet(modelClock, currTime=mcurrtime, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call ESMF_ClockSet(modelClock, currTime=currTime, timeStep=timestep, rc=rc)
+    call ESMF_TimeIntervalSet(mtimestep, s_r8=dt_atmos, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call ESMF_ClockPrint(modelClock, options="currTime", &
-         preString="entering SetRunClock DATM with modelClock current: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
-    call ESMF_ClockPrint(driverClock, options="currTime", &
-         preString="entering SetRunClock DATM with driverClock current: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
+    !--------------------------------
+    ! check that the current time in the model and driver are the same
+    !--------------------------------
 
-    call ESMF_ClockPrint(modelClock, options="stopTime", &
-         preString="entering SetRunClock DATM with modelClock stop: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
-    call ESMF_ClockPrint(driverClock, options="stopTime", &
-         preString="entering SetRunClock DATM with driverClock stop: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
+    if (mcurrtime /= dcurrtime) then
+      call ESMF_TimeGet(dcurrtime, timeString=dtimestring, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    ! check and set the component clock against the driver clock
-    call NUOPC_CompCheckSetClock(model, driverClock, rc=rc)
+      call ESMF_TimeGet(mcurrtime, timeString=mtimestring, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      call ESMF_LogSetError(ESMF_RC_VAL_WRONG, &
+           msg=trim(subname)//": ERROR in time consistency: "//trim(dtimestring)//" != "//trim(mtimestring),  &
+           line=__LINE__, file=__FILE__, rcToReturn=rc)
+      return
+    endif
+
+    !--------------------------------
+    ! force model clock currtime and timestep to match driver and set stoptime
+    !--------------------------------
+
+    mstoptime = mcurrtime + dtimestep
+
+    call ESMF_ClockSet(modelClock, currTime=dcurrtime, timeStep=dtimestep, stopTime=mstoptime, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_LogWrite("User routine SetRunClock Atm finished", ESMF_LOGMSG_INFO)
