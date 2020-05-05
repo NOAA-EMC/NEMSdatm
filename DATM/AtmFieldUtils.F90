@@ -115,11 +115,11 @@ module AtmFieldUtils
 
   !-------------------------------------------------------------------------------------
 
-  subroutine AtmFieldCheck(importState, exportState, tag, rc)
+  subroutine AtmFieldCheck(exportState, tag, rc)
 
   use AtmInternalFields, only : iprnt, jprnt
 
-  type(ESMF_State)              :: importState, exportState
+  type(ESMF_State)              :: exportState
   character(len=*), intent( in) :: tag
            integer, intent(out) :: rc
 
@@ -170,9 +170,8 @@ module AtmFieldUtils
 
   !-----------------------------------------------------------------------------
 
-  subroutine AtmFieldDump(importState, exportState, tag, timestr, rc)
+  subroutine AtmFieldDump(exportState, tag, timestr, rc)
 
-  type(ESMF_State)              :: importState
   type(ESMF_State)              :: exportState
   character(len=*), intent( in) :: tag
   character(len=*), intent( in) :: timestr
@@ -325,7 +324,7 @@ module AtmFieldUtils
 
   !-----------------------------------------------------------------------------
 
-  subroutine AtmBundleIntp(gcomp, importState, exportState, externalClock, hour, rc)
+  subroutine AtmBundleIntp(gcomp, exportState, externalClock, hour, rc)
 
   use AtmInternalFields, only : hfwd,hbak
   use AtmInternalFields, only : iprnt,jprnt
@@ -333,7 +332,6 @@ module AtmFieldUtils
   use AtmInternalFields, only : AtmBundleFwd, AtmBundleBak
 
   type(ESMF_GridComp)        :: gcomp
-  type(ESMF_State)           :: importState
   type(ESMF_State)           :: exportState
   type(ESMF_Clock)           :: externalClock
 

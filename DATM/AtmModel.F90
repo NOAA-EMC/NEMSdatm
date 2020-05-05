@@ -20,12 +20,11 @@ module AtmModel
 
   contains
 
-  subroutine AtmInit(gcomp, importState, exportState, externalClock, rc)
+  subroutine AtmInit(gcomp, exportState, externalClock, rc)
 
     use AtmInternalFields
 
     type(ESMF_GridComp)  :: gcomp
-    type(ESMF_State)     :: importState
     type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
     integer, intent(out) :: rc
@@ -82,17 +81,16 @@ module AtmModel
     call AtmForce(gcomp,exportState,externalClock,0,rc)
     call AtmBundleCheck('after AtmForce',rc)
     !time interpolate between fwd & bak values
-    call AtmBundleIntp(gcomp, importState, exportState, externalClock, 0.0d8, rc)
+    call AtmBundleIntp(gcomp, exportState, externalClock, 0.0d8, rc)
 
     call ESMF_LogWrite("User run routine AtmInit finished", ESMF_LOGMSG_INFO)
   end subroutine AtmInit
 
   !-----------------------------------------------------------------------------
 
-  subroutine AtmRun(gcomp, importState, exportState, externalClock, rc)
+  subroutine AtmRun(gcomp, exportState, externalClock, rc)
 
     type(ESMF_GridComp)  :: gcomp
-    type(ESMF_State)     :: importState
     type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
     integer, intent(out) :: rc
@@ -140,7 +138,7 @@ module AtmModel
     
     call AtmBundleCheck('after AtmRun',rc)
     !time interpolate between fwd & bak values
-    call AtmBundleIntp(gcomp, importState, exportState, externalClock, hour, rc)
+    call AtmBundleIntp(gcomp, exportState, externalClock, hour, rc)
 
     call ESMF_LogWrite("User run routine AtmRun finished", ESMF_LOGMSG_INFO)
 

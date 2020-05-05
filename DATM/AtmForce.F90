@@ -76,7 +76,7 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
    
    call ESMF_TimeGet(nextTime,h_r8=hfwd,rc=rc)
   endif
-  write(msgString,'(3a,f12.3)')'using ',trim(filename),' at fwd clock hour ',real(hfwd,4)
+  write(msgString,'(3a,f12.3)')'using ',trim(filename),' at fwd clock hour ',hfwd
   call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
   ! read the Atm field data into the Fwd bundle

@@ -106,7 +106,8 @@ module DAtm
   subroutine InitializeP0(model, importState, exportState, externalClock, rc)
 
     type(ESMF_GridComp)   :: model
-    type(ESMF_State)      :: importState, exportState
+    type(ESMF_State)      :: importState
+    type(ESMF_State)      :: exportState
     type(ESMF_Clock)      :: externalClock
     integer, intent(out)  :: rc
 
@@ -169,7 +170,8 @@ module DAtm
   subroutine InitializeP1(model, importState, exportState, externalClock, rc)
    
     type(ESMF_GridComp)  :: model
-    type(ESMF_State)     :: importState, exportState
+    type(ESMF_State)     :: importState
+    type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
     integer, intent(out) :: rc
    
@@ -258,7 +260,8 @@ module DAtm
   subroutine InitializeP2(model, importState, exportState, externalClock, rc)
    
     type(ESMF_GridComp)  :: model
-    type(ESMF_State)     :: importState, exportState
+    type(ESMF_State)     :: importState
+    type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
     integer, intent(out) :: rc
     
@@ -312,13 +315,13 @@ module DAtm
     !call ESMF_GridCompPrint(model, rc=rc)
 
     ! Create and fill the AtmBundle
-    call    AtmBundleCreate(model, importState, exportState, rc)
+    call    AtmBundleCreate(model, exportState, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call AtmFieldsRealize(exportState, gridOut, AtmBundleFields, 'Atm Export', rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call AtmInit(model, importState, exportState, externalClock, rc)
+    call AtmInit(model, exportState, externalClock, rc)
 
     ! AtmInit calls AtmForce and loads the values for the first integration 
     ! timestep, so.....
@@ -348,7 +351,7 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call ESMF_LogWrite('Atm InitializeDataComplete', ESMF_LOGMSG_INFO)
 
-    call AtmFieldCheck(importState, exportState, 'InitP2 Atm', rc)
+    call AtmFieldCheck(exportState, 'InitP2 Atm', rc)
 
     call ESMF_LogWrite("User initialize routine InitP2 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -362,7 +365,7 @@ module DAtm
     integer, intent(out) :: rc
     
     ! local variables
-    type(ESMF_State)           :: importState, exportState
+    type(ESMF_State)           :: exportState
     type(ESMF_Clock)           :: modelClock
     type(ESMF_Time)            ::  stopTime
     type(ESMF_Time)            :: startTime
@@ -376,10 +379,9 @@ module DAtm
   
     call ESMF_LogWrite("User routine ModelAdvance Atm started", ESMF_LOGMSG_INFO)
 
-    ! query the Component for its clock, importState and exportState
+    ! query the Component for its clock and exportState
     call NUOPC_ModelGet(model, &
                         modelClock=modelClock, &
-                        importState=importState, &
                         exportState=exportState, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
@@ -411,17 +413,16 @@ module DAtm
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
 
     call ESMF_TimeGet(currTime+timestep, timestring=export_timestr, rc=rc)
-    call ESMF_LogWrite(trim(export_timestr), ESMF_LOGMSG_INFO)
 
     ! Run the component
-    call AtmRun(model, importState, exportState, modelClock, rc)
+    call AtmRun(model, exportState, modelClock, rc)
 
     ! Check Values
-    call AtmFieldCheck(importState, exportState, 'after AtmRun', rc)
+    call AtmFieldCheck(exportState, 'after AtmRun', rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if(dumpfields)then
-     call AtmFieldDump(importstate, exportstate, 'after AtmRun', trim(export_timestr), rc)
+     call AtmFieldDump(exportstate, 'after AtmRun', trim(export_timestr), rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif
 
