@@ -263,6 +263,7 @@ module DAtm
     type(ESMF_State)     :: importState
     type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
+    type(ESMF_Time)            ::  currTime
     integer, intent(out) :: rc
     
     ! local variables
@@ -270,6 +271,7 @@ module DAtm
     type(ESMF_Grid)         :: gridOut
     type(ESMF_Field)        :: field
     character(ESMF_MAXSTR)  :: msgString
+    character(ESMF_MAXSTR)  :: export_timestr
     character(ESMF_MAXSTR)  :: fname
 
     integer :: ii, nfields
@@ -352,6 +354,15 @@ module DAtm
     call ESMF_LogWrite('Atm InitializeDataComplete', ESMF_LOGMSG_INFO)
 
     call AtmFieldCheck(exportState, 'InitP2 Atm', rc)
+
+    ! the initial fields at model startup
+    if(dumpfields)then
+     call ESMF_ClockGet(externalClock, currTime=currTime, rc = rc)
+     call ESMF_TimeGet(currTime, timestring=export_timestr, rc=rc)
+
+     call AtmFieldDump(exportState, 'after AtmRun', trim(export_timestr), rc)
+     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    endif
 
     call ESMF_LogWrite("User initialize routine InitP2 Atm finished", ESMF_LOGMSG_INFO)
 

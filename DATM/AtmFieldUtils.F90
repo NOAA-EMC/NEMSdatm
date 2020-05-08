@@ -190,6 +190,7 @@ module AtmFieldUtils
 
   call ESMF_LogWrite("User routine AtmFieldDump started", ESMF_LOGMSG_INFO)
 
+  ! Atm variables in exportState
   nfields = size(AtmBundleFields)
   do ii = 1,nfields
    call ESMF_StateGet(exportState, &
