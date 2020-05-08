@@ -422,7 +422,7 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if(dumpfields)then
-     call AtmFieldDump(exportstate, 'after AtmRun', trim(export_timestr), rc)
+     call AtmFieldDump(exportState, 'after AtmRun', trim(export_timestr), rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif
 
