@@ -170,11 +170,10 @@ module AtmFieldUtils
 
   !-----------------------------------------------------------------------------
 
-  subroutine AtmFieldDump(exportState, tag, timestr, rc)
+  subroutine AtmFieldDump(exportState, filename, rc)
 
   type(ESMF_State)              :: exportState
-  character(len=*), intent( in) :: tag
-  character(len=*), intent( in) :: timestr
+  character(len=*), intent( in) :: filename
            integer, intent(out) :: rc
 
   ! Local variables
@@ -182,7 +181,6 @@ module AtmFieldUtils
 
   integer :: ii,nfields
   character(len=ESMF_MAXSTR) :: varname
-  character(len=ESMF_MAXSTR) :: filename
   character(len=ESMF_MAXSTR) :: msgString
 
   ! Initialize return code
@@ -198,9 +196,6 @@ module AtmFieldUtils
                       field=field,rc=rc)
     varname = trim(AtmBundleFields(ii)%shortname)
 
-    if(trim(tag) .eq. 'before AtmRun')filename = 'field_atm_exportb_'//trim(timestr)//'.nc'
-    if(trim(tag) .eq.  'after AtmRun')filename = 'field_atm_exporta_'//trim(timestr)//'.nc'
-
     write(msgString, '(a,i6)')'Writing exportState field '//trim(varname)//' to ' &
                             //trim(filename)
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
@@ -209,11 +204,6 @@ module AtmFieldUtils
                          fileName =trim(filename), &
                          timeslice=1, &
                          overwrite=.true., rc=rc)
-    !endif
-    !if(iicnt .eq. 1)then
-    ! write(msgString, *)'Writing exportState field ',trim(varname),' to ',trim(filename)
-    ! call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
-    !endif
   enddo
   call ESMF_LogWrite("User routine AtmFieldDump finished", ESMF_LOGMSG_INFO)
 

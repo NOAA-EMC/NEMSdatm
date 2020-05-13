@@ -263,7 +263,7 @@ module DAtm
     type(ESMF_State)     :: importState
     type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
-    type(ESMF_Time)            ::  currTime
+    type(ESMF_Time)      :: currTime
     integer, intent(out) :: rc
     
     ! local variables
@@ -271,7 +271,7 @@ module DAtm
     type(ESMF_Grid)         :: gridOut
     type(ESMF_Field)        :: field
     character(ESMF_MAXSTR)  :: msgString
-    character(ESMF_MAXSTR)  :: export_timestr
+    character(ESMF_MAXSTR)  :: timestr
     character(ESMF_MAXSTR)  :: fname
 
     integer :: ii, nfields
@@ -358,9 +358,10 @@ module DAtm
     ! the initial fields at model startup
     if(dumpfields)then
      call ESMF_ClockGet(externalClock, currTime=currTime, rc = rc)
-     call ESMF_TimeGet(currTime, timestring=export_timestr, rc=rc)
+     call ESMF_TimeGet(currTime, timestring=timestr, rc=rc)
 
-     call AtmFieldDump(exportState, 'after AtmRun', trim(export_timestr), rc)
+     fname = 'field_atm_exporta_init_'//trim(timestr)
+     call AtmFieldDump(exportState, trim(fname), rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif
 
@@ -383,6 +384,7 @@ module DAtm
     type(ESMF_Time)            ::  currTime
     type(ESMF_TimeInterval)    :: timeStep
 
+    character(len=ESMF_MAXSTR) :: fname
     character(len=ESMF_MAXSTR) :: msgString
     character(len=ESMF_MAXSTR) :: export_timestr
 
@@ -433,7 +435,8 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if(dumpfields)then
-     call AtmFieldDump(exportState, 'after AtmRun', trim(export_timestr), rc)
+     fname = 'field_atm_exporta_'//trim(export_timestr)
+     call AtmFieldDump(exportState, trim(fname), rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif
 
