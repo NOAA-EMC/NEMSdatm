@@ -367,7 +367,7 @@ module DAtm
      call ESMF_ClockGet(externalClock, currTime=currTime, rc = rc)
      call ESMF_TimeGet(currTime, timestring=timestr, rc=rc)
 
-     fname = 'field_atm_exporta_init_'//trim(timestr)
+     fname = 'field_atm_exporta_'//trim(timestr)//'.nc'
      call AtmFieldDump(exportState, trim(fname), rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif
@@ -442,7 +442,7 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if(dumpfields)then
-     fname = 'field_atm_exporta_'//trim(export_timestr)
+     fname = 'field_atm_exporta_'//trim(export_timestr)//'.nc'
      call AtmFieldDump(exportState, trim(fname), rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif
