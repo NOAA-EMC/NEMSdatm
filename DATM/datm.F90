@@ -179,6 +179,7 @@ module DAtm
     type(ESMF_Config)       :: cf
     real(ESMF_KIND_R8)      :: medAtmCouplingIntervalSec
     character(ESMF_MAXSTR)  :: msgString
+    character(20)           :: cvalue
 
     rc = ESMF_SUCCESS
    
@@ -249,6 +250,12 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     write(msgString,'(a,f8.1)')'Model configure found with  atm_coupling_interval_sec = ', &
                             medAtmCouplingIntervalSec
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+
+    call NUOPC_CompAttributeGet(model, name='DebugFlag', value=cvalue, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    read(cvalue,*) dbug_flag
+    write(msgString,'(a,i6)')'DebugFlag = ',dbug_flag
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
     call ESMF_LogWrite("User initialize routine InitP1 Atm finished", ESMF_LOGMSG_INFO)
@@ -353,7 +360,7 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call ESMF_LogWrite('Atm InitializeDataComplete', ESMF_LOGMSG_INFO)
 
-    call AtmFieldCheck(exportState, 'InitP2 Atm', rc)
+    if(dbug_flag > 5)call AtmFieldCheck(exportState, 'InitP2 Atm', rc)
 
     ! the initial fields at model startup
     if(dumpfields)then
@@ -431,7 +438,7 @@ module DAtm
     call AtmRun(model, exportState, modelClock, rc)
 
     ! Check Values
-    call AtmFieldCheck(exportState, 'after AtmRun', rc)
+    if(dbug_flag > 5)call AtmFieldCheck(exportState, 'after AtmRun', rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if(dumpfields)then

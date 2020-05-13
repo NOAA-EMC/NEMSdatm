@@ -393,12 +393,14 @@ module AtmFieldUtils
     !                   real(AtmBundleFields(ii)%farrayPtr_fwd(ijloc(1),ijloc(2)),4)
     !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
-    write (msgString,*)' AtmIntp ',&
-                       trim(AtmBundleFields(ii)%shortname),&
-                       real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4),&
-                       real(AtmBundleFields(ii)%farrayPtr_bak(iprnt,jprnt),4),&
-                       real(AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt),4)
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+    if(dbug_flag > 0)then
+     write (msgString,*)' AtmIntp ',&
+                        trim(AtmBundleFields(ii)%shortname),&
+                        real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4),&
+                        real(AtmBundleFields(ii)%farrayPtr_bak(iprnt,jprnt),4),&
+                        real(AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt),4)
+     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+    end if
 
     !write (msgString,*)' AtmBundleFields ',&
     !                   trim(AtmBundleFields(ii)%field_name),' min,max,sum ',&
