@@ -110,7 +110,9 @@ module DAtm
     type(ESMF_State)      :: exportState
     type(ESMF_Clock)      :: externalClock
     integer, intent(out)  :: rc
+    logical               :: isPresent, isSet
 
+    integer                    :: iostat
     character(len=10)          :: value
     character(len=ESMF_MAXSTR) :: msgString
 
@@ -159,6 +161,54 @@ module DAtm
 
     write(msgString,'(A,l6)')'DATM Profile_memory = ',profile_memory
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+
+    scalar_field_count = 0
+    call NUOPC_CompAttributeGet(model, name="ScalarFieldCount", value=value, &
+         isPresent=isPresent, isSet=isSet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+       read(value, '(i)', iostat=iostat) scalar_field_count
+       if (iostat /= 0) then
+         call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+              msg="DATM : ScalarFieldCount not an integer: "//trim(value), &
+              line=__LINE__, file=__FILE__, rcToReturn=rc)
+         return
+       endif
+       write(msgString,*) scalar_field_count
+       call ESMF_LogWrite('DATM: ScalarFieldCount = '//trim(msgString), ESMF_LOGMSG_INFO)
+    endif
+
+    scalar_field_idx_grid_nx = 0
+    call NUOPC_CompAttributeGet(model, name="ScalarFieldIdxGridNX", value=value, &
+         isPresent=isPresent, isSet=isSet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+       read(value, '(i)', iostat=iostat) scalar_field_idx_grid_nx
+       if (iostat /= 0) then
+          call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+               msg="DATM : ScalarFieldIdxGridNX not an integer: "//trim(value), &
+               line=__LINE__, file=__FILE__, rcToReturn=rc)
+          return
+       endif
+       write(msgString,*) scalar_field_idx_grid_nx
+       call ESMF_LogWrite('DATM: ScalarFieldIdxGridNX = '//trim(msgString), ESMF_LOGMSG_INFO)
+    endif
+
+    scalar_field_idx_grid_ny = 0
+    call NUOPC_CompAttributeGet(model, name="ScalarFieldIdxGridNY", value=value, &
+         isPresent=isPresent, isSet=isSet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+       read(value, '(i)', iostat=iostat) scalar_field_idx_grid_ny
+       if (iostat /= 0) then
+          call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+               msg="DATM : ScalarFieldIdxGridNY not an integer: "//trim(value), &
+               line=__LINE__, file=__FILE__, rcToReturn=rc)
+          return
+       endif
+       write(msgString,*) scalar_field_idx_grid_ny
+       call ESMF_LogWrite('DATM: ScalarFieldIdxGridNY = '//trim(msgString), ESMF_LOGMSG_INFO)
+    endif
 #endif
 
     call ESMF_LogWrite("User initialize routine InitP0 Atm finished", ESMF_LOGMSG_INFO)

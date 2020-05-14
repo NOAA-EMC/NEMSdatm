@@ -15,10 +15,14 @@ module AtmInternalFields
 
   !from model_configure
                        integer, public :: iatm,jatm,nfhout
+                      integer, public  :: scalar_field_count = 0
+                      integer, public  :: scalar_field_idx_grid_nx = 0
+                      integer, public  :: scalar_field_idx_grid_ny = 0
        real(kind=ESMF_KIND_R8), public :: dt_atmos 
   character(len=ESMF_MAXSTR),   public :: filename_base 
   character(len=ESMF_MAXSTR),   public :: cdate0 
   character(len=ESMF_MAXSTR),   public :: dirpath = 'DATM_INPUT/'
+  character(len=ESMF_MAXSTR),   public :: scalar_field_name = ''
 
   ! the forward and backward timestamps
      real(kind=ESMF_KIND_R8), public :: hfwd, hbak

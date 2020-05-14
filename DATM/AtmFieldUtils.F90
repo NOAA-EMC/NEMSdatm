@@ -69,17 +69,26 @@ module AtmFieldUtils
     character(len=*),          intent(in   )  :: tag
     integer,                   intent(out  )  :: rc
 
+    integer                    :: localPet
+    type(ESMF_VM)              :: vm
     type(ESMF_ArraySpec)       :: arrayspecR8
     type(ESMF_Field)           :: field
     type(ESMF_StaggerLoc)      :: staggerloc
     character(len=ESMF_MAXSTR) :: msgString
-
+    integer                    :: mpicom
+    integer                    :: npet
     integer                    :: ii,nfields
     logical                    :: connected
 
     rc = ESMF_SUCCESS
     call ESMF_LogWrite("User routine AtmFieldsRealize "//trim(tag)//" started", ESMF_LOGMSG_INFO)
                   
+    call ESMF_VMGetCurrent(vm, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    call ESMF_VMGet(vm, petCount=npet, mpiCommunicator=mpicom, localPet=localPet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
     nfields=size(field_defs)
     !print *,'found nfields = ',nfields,' to realize ',field_defs%field_name
 
@@ -109,6 +118,20 @@ module AtmFieldUtils
       ! enddo
       !enddo
     enddo
+
+    !---------------------------------
+    ! set scalar data in export state
+    !---------------------------------
+
+    if (len_trim(scalar_field_name) > 0) then
+       call State_SetScalar(dble(iatm),scalar_field_idx_grid_nx, state, localPet, &
+           scalar_field_name, scalar_field_count, rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+       call State_SetScalar(dble(jatm),scalar_field_idx_grid_ny, state, localPet, &
+            scalar_field_name, scalar_field_count, rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    endif
 
     call ESMF_LogWrite("User routine AtmFieldsRealize "//trim(tag)//" finished", ESMF_LOGMSG_INFO)
   end subroutine AtmFieldsRealize
@@ -413,4 +436,39 @@ module AtmFieldUtils
   call ESMF_LogWrite("User routine AtmBundleIntp finished", ESMF_LOGMSG_INFO)
   end subroutine AtmBundleIntp
 
+  !> Set scalar data from state for a particula name
+  subroutine State_SetScalar(value, scalar_id, State, mytask, scalar_name, scalar_count,  rc)
+    real(ESMF_KIND_R8),intent(in)     :: value
+    integer,           intent(in)     :: scalar_id
+    type(ESMF_State),  intent(inout)  :: State
+    integer,           intent(in)     :: mytask
+    character(len=*),  intent(in)     :: scalar_name
+    integer,           intent(in)     :: scalar_count
+    integer,           intent(inout)  :: rc           !< return code
+  
+    ! local variables
+    type(ESMF_Field)                :: field
+    real(ESMF_KIND_R8), pointer     :: farrayptr(:,:)
+    character(len=*), parameter     :: subname='(DATM_cap:State_SetScalar)'
+    !--------------------------------------------------------
+  
+    rc = ESMF_SUCCESS
+  
+    call ESMF_StateGet(State, itemName=trim(scalar_name), field=field, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+  
+    if (mytask == 0) then
+      call ESMF_FieldGet(field, farrayPtr=farrayptr, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+  
+      if (scalar_id < 0 .or. scalar_id > scalar_count) then
+         call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+              msg=subname//": ERROR in scalar_id", line=__LINE__, file=__FILE__, rcToReturn=rc)
+         return
+      endif
+  
+      farrayptr(scalar_id,1) = value
+    endif
+  
+  end subroutine State_SetScalar
 end module AtmFieldUtils
