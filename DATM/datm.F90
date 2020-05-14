@@ -17,6 +17,7 @@ module DAtm
   use AtmFieldUtils,     only : AtmFieldsAdvertise, AtmFieldsRealize
   use AtmFieldUtils,     only : AtmFieldDump
   use AtmFieldUtils,     only : AtmFieldCheck
+  use AtmFieldUtils,     only : State_SetScalar
   use AtmGridUtils,      only : WriteCoord, WriteMask
 
   ! AtmInit called by InitializeP2, AtmRun called by ModelAdvance
@@ -330,6 +331,7 @@ module DAtm
     type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
     type(ESMF_Time)      :: currTime
+    type(ESMF_VM)        :: vm
     integer, intent(out) :: rc
     
     ! local variables
@@ -340,11 +342,18 @@ module DAtm
     character(ESMF_MAXSTR)  :: timestr
     character(ESMF_MAXSTR)  :: fname
 
+    integer :: localPet, npet, mpicom
     integer :: ii, nfields
 
     rc = ESMF_SUCCESS
 
     call ESMF_LogWrite("User initialize routine InitP2 Atm started", ESMF_LOGMSG_INFO)
+
+    call ESMF_VMGetCurrent(vm, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    call ESMF_VMGet(vm, petCount=npet, mpiCommunicator=mpicom, localPet=localPet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_ClockPrint(externalClock, options="currTime", &
          preString="InitP2 Atm CLOCK_EARTH current: ", &
@@ -408,6 +417,25 @@ module DAtm
 
       call ESMF_LogWrite(trim(AtmBundleFields(ii)%shortname)//' set to Updated', ESMF_LOGMSG_INFO)
     enddo !ii
+    
+    ! set scalars for cmeps
+    if(len_trim(scalar_field_name) > 0) then
+      call State_SetScalar(dble(iatm),scalar_field_idx_grid_nx, exportState, localPet, &
+          scalar_field_name, scalar_field_count, rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      call State_SetScalar(dble(jatm),scalar_field_idx_grid_ny, exportState, localPet, &
+           scalar_field_name, scalar_field_count, rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      call ESMF_StateGet(exportState, itemName=trim(scalar_field_name), field=field, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      call NUOPC_SetAttribute(field, name="Updated", value="true", rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      call ESMF_LogWrite(trim(scalar_field_name)//' set to Updated', ESMF_LOGMSG_INFO)
+    end if
 
     ! the component needs to indicate that it is fully done with
     ! initializing its data:
