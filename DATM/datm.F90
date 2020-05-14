@@ -113,7 +113,7 @@ module DAtm
     logical               :: isPresent, isSet
 
     integer                    :: iostat
-    character(len=10)          :: value
+    character(len=64)          :: value
     character(len=ESMF_MAXSTR) :: msgString
 
     rc = ESMF_SUCCESS
@@ -161,6 +161,15 @@ module DAtm
 
     write(msgString,'(A,l6)')'DATM Profile_memory = ',profile_memory
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+
+    scalar_field_name = ""
+    call NUOPC_CompAttributeGet(model, name="ScalarFieldName", value=value, &
+         isPresent=isPresent, isSet=isSet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+       scalar_field_name = trim(value)
+       call ESMF_LogWrite('DATM: ScalarFieldName = '//trim(scalar_field_name), ESMF_LOGMSG_INFO)
+    endif
 
     scalar_field_count = 0
     call NUOPC_CompAttributeGet(model, name="ScalarFieldCount", value=value, &
