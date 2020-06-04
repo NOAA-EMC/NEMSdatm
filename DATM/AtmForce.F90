@@ -27,7 +27,7 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
   integer :: ii,nfields
   integer :: iii, iid, iiu
   logical :: fexists 
-  integer :: fpresent(1)
+  integer :: fpresent(1) = 0
 
   character(len=ESMF_MAXSTR) :: varname
   character(len=ESMF_MAXSTR) :: filename 
@@ -117,6 +117,10 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
                           fileName=trim(filename), &
                           variableName = trim(varname), &
                           rc=rc)
+      if( rc /= ESMF_SUCCESS)then
+       call ESMF_LogWrite('Problem reading '//trim(filename), ESMF_LOGMSG_INFO)
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
+      endif
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       call ESMF_FieldGet(field,farrayPtr=AtmBundleFields(ii)%farrayPtr_fwd,rc=rc)
