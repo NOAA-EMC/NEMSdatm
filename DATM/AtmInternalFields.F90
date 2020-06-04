@@ -59,9 +59,10 @@ module AtmInternalFields
 
   type(AtmField_Definition), public :: AtmBundleFields(AtmFieldCount)
 
-  integer, public   :: lPet, petCnt
+  integer, public   :: lPet, petCnt, dbug_flag
   ! a diagnostic point to print at
   integer, public   :: iprnt, jprnt
+  integer :: icnt
 
   ! called by AtmInit
   public :: AtmBundleSetUp
@@ -325,13 +326,19 @@ module AtmInternalFields
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     nfields = size(AtmBundleFields)
+     icnt = 0
     do ii = 1,nfields
      call ESMF_ConfigGetAttribute(config=cfdata, &
                                   value=lvalue, &
                                   label=trim(AtmBundleFields(ii)%standard_name),rc=rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
      AtmBundleFields(ii)%isPresent=lvalue
+     icnt = icnt + 1
     enddo
+    if(icnt .ne. nfields)then
+      call ESMF_LogWrite('Missing input fields in datm_data_table', ESMF_LOGMSG_INFO)
+      call ESMF_Finalize(endflag=ESMF_END_ABORT)
+    endif
 
   !-----------------------------------------------------------------------------
   ! check

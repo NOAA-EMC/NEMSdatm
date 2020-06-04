@@ -115,11 +115,11 @@ module AtmFieldUtils
 
   !-------------------------------------------------------------------------------------
 
-  subroutine AtmFieldCheck(importState, exportState, tag, rc)
+  subroutine AtmFieldCheck(exportState, tag, rc)
 
   use AtmInternalFields, only : iprnt, jprnt
 
-  type(ESMF_State)              :: importState, exportState
+  type(ESMF_State)              :: exportState
   character(len=*), intent( in) :: tag
            integer, intent(out) :: rc
 
@@ -170,12 +170,10 @@ module AtmFieldUtils
 
   !-----------------------------------------------------------------------------
 
-  subroutine AtmFieldDump(importState, exportState, tag, timestr, rc)
+  subroutine AtmFieldDump(exportState, filename, rc)
 
-  type(ESMF_State)              :: importState
   type(ESMF_State)              :: exportState
-  character(len=*), intent( in) :: tag
-  character(len=*), intent( in) :: timestr
+  character(len=*), intent( in) :: filename
            integer, intent(out) :: rc
 
   ! Local variables
@@ -183,7 +181,6 @@ module AtmFieldUtils
 
   integer :: ii,nfields
   character(len=ESMF_MAXSTR) :: varname
-  character(len=ESMF_MAXSTR) :: filename
   character(len=ESMF_MAXSTR) :: msgString
 
   ! Initialize return code
@@ -191,15 +188,13 @@ module AtmFieldUtils
 
   call ESMF_LogWrite("User routine AtmFieldDump started", ESMF_LOGMSG_INFO)
 
+  ! Atm variables in exportState
   nfields = size(AtmBundleFields)
   do ii = 1,nfields
    call ESMF_StateGet(exportState, &
                       itemName = trim(AtmBundleFields(ii)%shortname), &
                       field=field,rc=rc)
     varname = trim(AtmBundleFields(ii)%shortname)
-
-    if(trim(tag) .eq. 'before AtmRun')filename = 'field_atm_exportb_'//trim(timestr)//'.nc'
-    if(trim(tag) .eq.  'after AtmRun')filename = 'field_atm_exporta_'//trim(timestr)//'.nc'
 
     write(msgString, '(a,i6)')'Writing exportState field '//trim(varname)//' to ' &
                             //trim(filename)
@@ -209,11 +204,6 @@ module AtmFieldUtils
                          fileName =trim(filename), &
                          timeslice=1, &
                          overwrite=.true., rc=rc)
-    !endif
-    !if(iicnt .eq. 1)then
-    ! write(msgString, *)'Writing exportState field ',trim(varname),' to ',trim(filename)
-    ! call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
-    !endif
   enddo
   call ESMF_LogWrite("User routine AtmFieldDump finished", ESMF_LOGMSG_INFO)
 
@@ -325,7 +315,7 @@ module AtmFieldUtils
 
   !-----------------------------------------------------------------------------
 
-  subroutine AtmBundleIntp(gcomp, importState, exportState, externalClock, hour, rc)
+  subroutine AtmBundleIntp(gcomp, exportState, externalClock, hour, rc)
 
   use AtmInternalFields, only : hfwd,hbak
   use AtmInternalFields, only : iprnt,jprnt
@@ -333,7 +323,6 @@ module AtmFieldUtils
   use AtmInternalFields, only : AtmBundleFwd, AtmBundleBak
 
   type(ESMF_GridComp)        :: gcomp
-  type(ESMF_State)           :: importState
   type(ESMF_State)           :: exportState
   type(ESMF_Clock)           :: externalClock
 
@@ -404,12 +393,14 @@ module AtmFieldUtils
     !                   real(AtmBundleFields(ii)%farrayPtr_fwd(ijloc(1),ijloc(2)),4)
     !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
-    write (msgString,*)' AtmIntp ',&
-                       trim(AtmBundleFields(ii)%shortname),&
-                       real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4),&
-                       real(AtmBundleFields(ii)%farrayPtr_bak(iprnt,jprnt),4),&
-                       real(AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt),4)
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+    if(dbug_flag > 0)then
+     write (msgString,*)' AtmIntp ',&
+                        trim(AtmBundleFields(ii)%shortname),&
+                        real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4),&
+                        real(AtmBundleFields(ii)%farrayPtr_bak(iprnt,jprnt),4),&
+                        real(AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt),4)
+     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+    end if
 
     !write (msgString,*)' AtmBundleFields ',&
     !                   trim(AtmBundleFields(ii)%field_name),' min,max,sum ',&

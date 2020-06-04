@@ -106,7 +106,8 @@ module DAtm
   subroutine InitializeP0(model, importState, exportState, externalClock, rc)
 
     type(ESMF_GridComp)   :: model
-    type(ESMF_State)      :: importState, exportState
+    type(ESMF_State)      :: importState
+    type(ESMF_State)      :: exportState
     type(ESMF_Clock)      :: externalClock
     integer, intent(out)  :: rc
 
@@ -169,7 +170,8 @@ module DAtm
   subroutine InitializeP1(model, importState, exportState, externalClock, rc)
    
     type(ESMF_GridComp)  :: model
-    type(ESMF_State)     :: importState, exportState
+    type(ESMF_State)     :: importState
+    type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
     integer, intent(out) :: rc
    
@@ -177,6 +179,7 @@ module DAtm
     type(ESMF_Config)       :: cf
     real(ESMF_KIND_R8)      :: medAtmCouplingIntervalSec
     character(ESMF_MAXSTR)  :: msgString
+    character(20)           :: cvalue
 
     rc = ESMF_SUCCESS
    
@@ -225,7 +228,6 @@ module DAtm
     write(msgString,'(a,i6)')'Model configure found with nfhout = ',nfhout
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
 
-
     call ESMF_ConfigGetAttribute(config=cf, &
                                  value=filename_base, &
                                  label='filename_base:',rc=rc)
@@ -250,6 +252,12 @@ module DAtm
                             medAtmCouplingIntervalSec
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
+    call NUOPC_CompAttributeGet(model, name='DebugFlag', value=cvalue, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    read(cvalue,*) dbug_flag
+    write(msgString,'(a,i6)')'DebugFlag = ',dbug_flag
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+
     call ESMF_LogWrite("User initialize routine InitP1 Atm finished", ESMF_LOGMSG_INFO)
 
   end subroutine InitializeP1
@@ -259,8 +267,10 @@ module DAtm
   subroutine InitializeP2(model, importState, exportState, externalClock, rc)
    
     type(ESMF_GridComp)  :: model
-    type(ESMF_State)     :: importState, exportState
+    type(ESMF_State)     :: importState
+    type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
+    type(ESMF_Time)      :: currTime
     integer, intent(out) :: rc
     
     ! local variables
@@ -268,6 +278,7 @@ module DAtm
     type(ESMF_Grid)         :: gridOut
     type(ESMF_Field)        :: field
     character(ESMF_MAXSTR)  :: msgString
+    character(ESMF_MAXSTR)  :: timestr
     character(ESMF_MAXSTR)  :: fname
 
     integer :: ii, nfields
@@ -313,13 +324,13 @@ module DAtm
     !call ESMF_GridCompPrint(model, rc=rc)
 
     ! Create and fill the AtmBundle
-    call    AtmBundleCreate(model, importState, exportState, rc)
+    call    AtmBundleCreate(model, exportState, rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call AtmFieldsRealize(exportState, gridOut, AtmBundleFields, 'Atm Export', rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call AtmInit(model, importState, exportState, externalClock, rc)
+    call AtmInit(model, exportState, externalClock, rc)
 
     ! AtmInit calls AtmForce and loads the values for the first integration 
     ! timestep, so.....
@@ -349,7 +360,17 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call ESMF_LogWrite('Atm InitializeDataComplete', ESMF_LOGMSG_INFO)
 
-    call AtmFieldCheck(importState, exportState, 'InitP2 Atm', rc)
+    if(dbug_flag > 5)call AtmFieldCheck(exportState, 'InitP2 Atm', rc)
+
+    ! the initial fields at model startup
+    if(dumpfields)then
+     call ESMF_ClockGet(externalClock, currTime=currTime, rc = rc)
+     call ESMF_TimeGet(currTime, timestring=timestr, rc=rc)
+
+     fname = 'field_atm_exporta_'//trim(timestr)//'.nc'
+     call AtmFieldDump(exportState, trim(fname), rc)
+     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    endif
 
     call ESMF_LogWrite("User initialize routine InitP2 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -363,13 +384,14 @@ module DAtm
     integer, intent(out) :: rc
     
     ! local variables
-    type(ESMF_State)           :: importState, exportState
+    type(ESMF_State)           :: exportState
     type(ESMF_Clock)           :: modelClock
     type(ESMF_Time)            ::  stopTime
     type(ESMF_Time)            :: startTime
     type(ESMF_Time)            ::  currTime
     type(ESMF_TimeInterval)    :: timeStep
 
+    character(len=ESMF_MAXSTR) :: fname
     character(len=ESMF_MAXSTR) :: msgString
     character(len=ESMF_MAXSTR) :: export_timestr
 
@@ -377,10 +399,9 @@ module DAtm
   
     call ESMF_LogWrite("User routine ModelAdvance Atm started", ESMF_LOGMSG_INFO)
 
-    ! query the Component for its clock, importState and exportState
+    ! query the Component for its clock and exportState
     call NUOPC_ModelGet(model, &
                         modelClock=modelClock, &
-                        importState=importState, &
                         exportState=exportState, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
@@ -395,69 +416,40 @@ module DAtm
                        currTime=currTime, &
                        startTime=startTime, &
                        stopTime=stopTime, &
+                       timeStep=timeStep, &
                        rc=rc)
 
-    call ESMF_ClockPrint(modelClock, options="currTime", &
+    call ESMF_TimePrint(currTime, &
          preString="ModelAdvance DATM with CLOCK current:   ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
-    call ESMF_ClockPrint(modelClock, options="stopTime", &
+    call ESMF_TimePrint(currTime + timeStep, &
+         preString="ModelAdvance DATM with CLOCK advance to: ", &
+         unit=msgString, rc=rc)
+    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+    call ESMF_TimePrint(stopTime, &
          preString="ModelAdvance DATM with CLOCK stop:   ", &
          unit=msgString)
     call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
-    call ESMF_ClockGet(modelClock, currTime=currTime, timeStep=timeStep, rc=rc)
 
-    ! TODO: why is this the export time?
-    call ESMF_TimeGet(currTime, timestring=export_timestr, rc=rc)
+    call ESMF_TimeGet(currTime+timestep, timestring=export_timestr, rc=rc)
 
     ! Run the component
-    call AtmRun(model, importState, exportState, modelClock, rc)
+    call AtmRun(model, exportState, modelClock, rc)
 
     ! Check Values
-    call AtmFieldCheck(importState, exportState, 'after AtmRun', rc)
+    if(dbug_flag > 5)call AtmFieldCheck(exportState, 'after AtmRun', rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if(dumpfields)then
-     call AtmFieldDump(importstate, exportstate, 'after AtmRun', trim(export_timestr), rc)
+     fname = 'field_atm_exporta_'//trim(export_timestr)//'.nc'
+     call AtmFieldDump(exportState, trim(fname), rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif
 
     call ESMF_LogWrite("User routine ModelAdvance Atm finished", ESMF_LOGMSG_INFO)
 
   end subroutine ModelAdvance
-
-  ! like cice_cap, which had the simplest clock settings I could find
-  !-----------------------------------------------------------------------------
-
-  subroutine SetClock(model, rc)
-
-    type(ESMF_GridComp)  :: model
-    integer, intent(out) :: rc
-    
-    ! local variables
-    type(ESMF_Clock)              :: clock
-    type(ESMF_TimeInterval)       :: stabilityTimeStep, timeStep
-
-    rc = ESMF_SUCCESS
-    
-    ! query the Component for its clock
-    call ESMF_GridCompGet(model, clock=clock, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
-    call ESMF_TimeIntervalSet(timestep, s_r8=dt_atmos, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
-    call ESMF_ClockSet(clock, timestep=timestep, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-      
-    ! initialize internal clock
-    ! here: parent Clock and stability timeStep determine actual model timeStep
-    call ESMF_TimeIntervalSet(stabilityTimeStep, s_r8=dt_atmos, rc=rc) 
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call NUOPC_CompSetClock(model, clock, stabilityTimeStep, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    
-  end subroutine SetClock
 
   !-----------------------------------------------------------------------------
 
@@ -468,10 +460,13 @@ module DAtm
 
     ! local variables
     type(ESMF_Clock)           :: modelClock, driverClock
-    type(ESMF_Time)            :: currTime
-    type(ESMF_TimeInterval)    :: timeStep
+    type(ESMF_Time)            :: mcurrtime, dcurrtime
+    type(ESMF_Time)            :: mstoptime, dstoptime
+    type(ESMF_TimeInterval)    :: mtimestep, dtimestep
 
+    character(len=ESMF_MAXSTR) :: mtimestring, dtimestring
     character(len=ESMF_MAXSTR) :: msgString
+    character(len=ESMF_MAXSTR) :: subname = "SetRunClock"
 
     rc = ESMF_SUCCESS
 #ifndef coupled
@@ -485,36 +480,40 @@ module DAtm
                         driverClock=driverClock, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    ! set the modelClock to have the current start time as the driverClock
-    call ESMF_ClockGet(driverClock, currTime=currTime, timeStep=timeStep, rc=rc)
+    call ESMF_ClockGet(driverClock, currTime=dcurrtime, timeStep=dtimestep, &
+                       stopTime=dstoptime, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call ESMF_TimeIntervalSet(timestep, s_r8=dt_atmos, rc=rc)
+    call ESMF_ClockGet(modelClock, currTime=mcurrtime, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call ESMF_ClockSet(modelClock, currTime=currTime, timeStep=timestep, rc=rc)
+    call ESMF_TimeIntervalSet(mtimestep, s_r8=dt_atmos, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    call ESMF_ClockPrint(modelClock, options="currTime", &
-         preString="entering SetRunClock DATM with modelClock current: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
-    call ESMF_ClockPrint(driverClock, options="currTime", &
-         preString="entering SetRunClock DATM with driverClock current: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
+    !--------------------------------
+    ! check that the current time in the model and driver are the same
+    !--------------------------------
 
-    call ESMF_ClockPrint(modelClock, options="stopTime", &
-         preString="entering SetRunClock DATM with modelClock stop: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
-    call ESMF_ClockPrint(driverClock, options="stopTime", &
-         preString="entering SetRunClock DATM with driverClock stop: ", &
-         unit=msgString)
-    call ESMF_LogWrite(msgString, ESMF_LOGMSG_INFO)
+    if (mcurrtime /= dcurrtime) then
+      call ESMF_TimeGet(dcurrtime, timeString=dtimestring, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-    ! check and set the component clock against the driver clock
-    call NUOPC_CompCheckSetClock(model, driverClock, rc=rc)
+      call ESMF_TimeGet(mcurrtime, timeString=mtimestring, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      call ESMF_LogSetError(ESMF_RC_VAL_WRONG, &
+           msg=trim(subname)//": ERROR in time consistency: "//trim(dtimestring)//" != "//trim(mtimestring),  &
+           line=__LINE__, file=__FILE__, rcToReturn=rc)
+      return
+    endif
+
+    !--------------------------------
+    ! force model clock currtime and timestep to match driver and set stoptime
+    !--------------------------------
+
+    mstoptime = mcurrtime + dtimestep
+
+    call ESMF_ClockSet(modelClock, currTime=dcurrtime, timeStep=dtimestep, stopTime=mstoptime, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     call ESMF_LogWrite("User routine SetRunClock Atm finished", ESMF_LOGMSG_INFO)
