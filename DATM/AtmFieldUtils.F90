@@ -16,6 +16,7 @@ module AtmFieldUtils
   public :: AtmFieldsAdvertise, AtmFieldsRealize
   public :: AtmFieldCheck
   public :: AtmFieldDump
+  public :: State_SetScalar
 
   ! called by AtmInit, AtmRun
   public :: AtmForceFwd2Bak, AtmBundleCheck
@@ -57,6 +58,13 @@ module AtmFieldUtils
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
     enddo
 
+    ! advertise scalars for cmeps
+    if (len_trim(scalar_field_name) > 0) then
+     call NUOPC_Advertise(state, standardName=trim(scalar_field_name), name=trim(scalar_field_name), rc=rc)
+     call ESMF_LogWrite("Advertise Field "// trim(scalar_field_name), ESMF_LOGMSG_INFO)
+     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    endif
+
   end subroutine AtmFieldsAdvertise
 
   !-----------------------------------------------------------------------------
@@ -73,9 +81,7 @@ module AtmFieldUtils
     type(ESMF_Field)           :: field
     type(ESMF_StaggerLoc)      :: staggerloc
     character(len=ESMF_MAXSTR) :: msgString
-
     integer                    :: ii,nfields
-    logical                    :: connected
 
     rc = ESMF_SUCCESS
     call ESMF_LogWrite("User routine AtmFieldsRealize "//trim(tag)//" started", ESMF_LOGMSG_INFO)
@@ -96,19 +102,30 @@ module AtmFieldUtils
                                name=trim(field_defs(ii)%shortname), rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-      call NUOPC_Realize(state, grid, rc=rc)
+      call NUOPC_Realize(state, field=field, rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       call ESMF_FieldGet(field, farrayPtr=field_defs(ii)%farrayPtr, rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
+      ! initialize
       field_defs(ii)%farrayPtr = 0.0
-      !do j = lbound(field_defs(ii)%farrayPtr,2),ubound(field_defs(ii)%farrayPtr,2)
-      ! do i = lbound(field_defs(ii)%farrayPtr,1),ubound(field_defs(ii)%farrayPtr,1)
-      !  field_defs(ii)%farrayPtr(i,j) = 0.0
-      ! enddo
-      !enddo
+
+      msgString = trim(tag)//" Field "// trim(field_defs(ii)%shortname) // " is connected on root pe"
+      call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
     enddo
+
+    ! realize scalars for cmeps
+    if (len_trim(scalar_field_name) > 0) then
+      call SetScalarField(field, rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      call NUOPC_Realize(state, field=field, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+      msgString = trim(tag)//" Field "// trim(scalar_field_name) // " is connected on root pe"
+      call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
+    endif
 
     call ESMF_LogWrite("User routine AtmFieldsRealize "//trim(tag)//" finished", ESMF_LOGMSG_INFO)
   end subroutine AtmFieldsRealize
@@ -413,4 +430,70 @@ module AtmFieldUtils
   call ESMF_LogWrite("User routine AtmBundleIntp finished", ESMF_LOGMSG_INFO)
   end subroutine AtmBundleIntp
 
+  !-----------------------------------------------------------------------------
+
+  !> Set scalar data from state for a particular name
+  subroutine State_SetScalar(value, scalar_id, State, mytask, scalar_name, scalar_count,  rc)
+    real(ESMF_KIND_R8),intent(in)     :: value
+    integer,           intent(in)     :: scalar_id
+    type(ESMF_State),  intent(inout)  :: State
+    integer,           intent(in)     :: mytask
+    character(len=*),  intent(in)     :: scalar_name
+    integer,           intent(in)     :: scalar_count
+    integer,           intent(inout)  :: rc           !< return code
+  
+    ! local variables
+    type(ESMF_Field)                :: field
+    real(ESMF_KIND_R8), pointer     :: farrayptr(:,:)
+    character(len=*), parameter     :: subname='(DATM: State_SetScalar)'
+    !--------------------------------------------------------
+  
+    rc = ESMF_SUCCESS
+  
+    call ESMF_StateGet(State, itemName=trim(scalar_name), field=field, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+  
+    if (mytask == 0) then
+      call ESMF_FieldGet(field, farrayPtr=farrayptr, rc=rc)
+      if (ChkErr(rc,__LINE__,u_FILE_u)) return
+  
+      if (scalar_id < 0 .or. scalar_id > scalar_count) then
+         call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
+              msg=subname//": ERROR in scalar_id", line=__LINE__, file=__FILE__, rcToReturn=rc)
+         return
+      endif
+  
+      farrayptr(scalar_id,1) = value
+    endif
+  
+  end subroutine State_SetScalar
+
+  !-----------------------------------------------------------------------------
+
+  subroutine SetScalarField(field, rc)
+
+    ! create a field with scalar data on the root pe
+    type(ESMF_Field), intent(inout)  :: field
+    integer,          intent(inout)  :: rc
+
+    ! local variables
+    type(ESMF_Distgrid) :: distgrid
+    type(ESMF_Grid)     :: grid
+    character(len=*), parameter :: subname='(DATM: SetScalarField)'
+
+    rc = ESMF_SUCCESS
+
+    ! create a DistGrid with a single index space element, which gets mapped onto DE 0.
+    distgrid = ESMF_DistGridCreate(minIndex=(/1/), maxIndex=(/1/), rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    grid = ESMF_GridCreate(distgrid, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    ! num of scalar values
+    field = ESMF_FieldCreate(name=trim(scalar_field_name), grid=grid, typekind=ESMF_TYPEKIND_R8, &
+         ungriddedLBound=(/1/), ungriddedUBound=(/scalar_field_count/), gridToFieldMap=(/2/), rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+  end subroutine SetScalarField
 end module AtmFieldUtils
