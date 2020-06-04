@@ -59,7 +59,8 @@ module AtmInternalFields
 
   type(AtmField_Definition), public :: AtmBundleFields(AtmFieldCount)
 
-  integer, public   :: lPet, petCnt, dbug_flag
+  integer, public   :: lPet, petCnt 
+  integer, public   :: dbug_flag = 0
   ! a diagnostic point to print at
   integer, public   :: iprnt, jprnt
   integer :: icnt
