@@ -15,10 +15,14 @@ module AtmInternalFields
 
   !from model_configure
                        integer, public :: iatm,jatm,nfhout
+                      integer, public  :: scalar_field_count = 0
+                      integer, public  :: scalar_field_idx_grid_nx = 0
+                      integer, public  :: scalar_field_idx_grid_ny = 0
        real(kind=ESMF_KIND_R8), public :: dt_atmos 
   character(len=ESMF_MAXSTR),   public :: filename_base 
   character(len=ESMF_MAXSTR),   public :: cdate0 
   character(len=ESMF_MAXSTR),   public :: dirpath = 'DATM_INPUT/'
+  character(len=ESMF_MAXSTR),   public :: scalar_field_name = ''
 
   ! the forward and backward timestamps
      real(kind=ESMF_KIND_R8), public :: hfwd, hbak
@@ -59,9 +63,11 @@ module AtmInternalFields
 
   type(AtmField_Definition), public :: AtmBundleFields(AtmFieldCount)
 
-  integer, public   :: lPet, petCnt
+  integer, public   :: lPet, petCnt 
+  integer, public   :: dbug_flag = 0
   ! a diagnostic point to print at
   integer, public   :: iprnt, jprnt
+  integer :: icnt
 
   ! called by AtmInit
   public :: AtmBundleSetUp
@@ -325,13 +331,19 @@ module AtmInternalFields
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     nfields = size(AtmBundleFields)
+     icnt = 0
     do ii = 1,nfields
      call ESMF_ConfigGetAttribute(config=cfdata, &
                                   value=lvalue, &
                                   label=trim(AtmBundleFields(ii)%standard_name),rc=rc)
      if (ChkErr(rc,__LINE__,u_FILE_u)) return
      AtmBundleFields(ii)%isPresent=lvalue
+     icnt = icnt + 1
     enddo
+    if(icnt .ne. nfields)then
+      call ESMF_LogWrite('Missing input fields in datm_data_table', ESMF_LOGMSG_INFO)
+      call ESMF_Finalize(endflag=ESMF_END_ABORT)
+    endif
 
   !-----------------------------------------------------------------------------
   ! check
