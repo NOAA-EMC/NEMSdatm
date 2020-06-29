@@ -1,4 +1,4 @@
-subroutine AtmBundleCreate(gcomp,importState, exportState, rc)
+subroutine AtmBundleCreate(gcomp, exportState, rc)
 
   use ESMF
 
@@ -7,7 +7,6 @@ subroutine AtmBundleCreate(gcomp,importState, exportState, rc)
   implicit none
 
   type(ESMF_GridComp)  :: gcomp
-  type(ESMF_State)     :: importState
   type(ESMF_State)     :: exportState
   integer, intent(out) :: rc
 
