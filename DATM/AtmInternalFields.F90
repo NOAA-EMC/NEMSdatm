@@ -59,7 +59,9 @@ module AtmInternalFields
                                               +  1  & !net lw
                                               +  4  & !momentum,sens,lat
                                               +  4  & !vis,ir,dir,dif
-                                              +  3    !ps,prec
+                                              +  3  & !ps,prec
+                                              +  2  & !u10m,v10m
+                                              +  2    !t2m,q2m
 
   type(AtmField_Definition), public :: AtmBundleFields(AtmFieldCount)
 
@@ -179,6 +181,42 @@ module AtmInternalFields
     AtmBundleFields(ii)%field_name    = 'Plowest'
     AtmBundleFields(ii)%file_varname  = 'pres_hyblev1'
     AtmBundleFields(ii)%unit_name     = 'Pa'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'inst_u_wind_height10m'
+    AtmBundleFields(ii)%field_name    = 'U10m'
+    AtmBundleFields(ii)%file_varname  = 'u10m'
+    AtmBundleFields(ii)%unit_name     = 'm/s'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'inst_v_wind_height10m'
+    AtmBundleFields(ii)%field_name    = 'V10m'
+    AtmBundleFields(ii)%file_varname  = 'v10m'
+    AtmBundleFields(ii)%unit_name     = 'm/s'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'inst_temp_height2m'
+    AtmBundleFields(ii)%field_name    = 'T2m'
+    AtmBundleFields(ii)%file_varname  = 't2m'
+    AtmBundleFields(ii)%unit_name     = 'K'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'inst_spec_humid_height2m'
+    AtmBundleFields(ii)%field_name    = 'Q2m'
+    AtmBundleFields(ii)%file_varname  = 'q2m'
+    AtmBundleFields(ii)%unit_name     = 'Kg/Kg'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
     AtmBundleFields(ii)%farrayPtr     => null()
