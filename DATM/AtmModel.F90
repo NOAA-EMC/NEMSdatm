@@ -4,7 +4,7 @@ module AtmModel
 
   use ESMF
   use AtmInternalFields, only : ChkErr
-  use AtmInternalFields, only : dbug_flag
+  use AtmInternalFields, only : dbug
   use AtmInternalFields, only : hfwd, hbak, nfhout
   use AtmFieldUtils,     only : AtmForceFwd2Bak, AtmBundleCheck
   use AtmFieldUtils,     only : AtmBundleIntp
@@ -73,14 +73,14 @@ module AtmModel
 
     ! initialize the fwd and bak fields as special case at initialzation
     call AtmForce(gcomp,exportState,externalClock,0,rc)
-    if(dbug_flag > 5)call AtmBundleCheck('after AtmForce',rc)
+    if(dbug > 5)call AtmBundleCheck('after AtmForce',rc)
     ! copy the fwd timestamp to the bak timestamp
     hbak = hfwd
     call AtmForceFwd2Bak(rc)
-    if(dbug_flag > 5)call AtmBundleCheck('after Fwd2Bak',rc)
-    ! reload the fwd 
+    if(dbug > 5)call AtmBundleCheck('after Fwd2Bak',rc)
+    ! reload the fwd
     call AtmForce(gcomp,exportState,externalClock,0,rc)
-    if(dbug_flag > 5)call AtmBundleCheck('after AtmForce',rc)
+    if(dbug > 5)call AtmBundleCheck('after AtmForce',rc)
     !time interpolate between fwd & bak values
     call AtmBundleIntp(gcomp, exportState, externalClock, 0.0d8, rc)
 
@@ -112,7 +112,7 @@ module AtmModel
     ! Increment counter
     counter = counter + 1
 
-    ! get the current time of the model clock 
+    ! get the current time of the model clock
     call ESMF_ClockGet(externalClock, currTime=currTime, rc=rc)
     ! get the current time of the model clock
     ! returns minutes as whole number
@@ -137,7 +137,7 @@ module AtmModel
     write(msgString,*)'AtmRun: hbkd,hour,hfwd ', hbak,hour,hfwd
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
     
-    if(dbug_flag > 5)call AtmBundleCheck('after AtmRun',rc)
+    if(dbug > 5)call AtmBundleCheck('after AtmRun',rc)
     !time interpolate between fwd & bak values
     call AtmBundleIntp(gcomp, exportState, externalClock, hour, rc)
 

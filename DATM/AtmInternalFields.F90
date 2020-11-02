@@ -14,15 +14,17 @@ module AtmInternalFields
   private
 
   !from model_configure
-                       integer, public :: iatm,jatm,nfhout
+                      integer, public  :: iatm = 0, jatm = 0, nfhout = 0
+       real(kind=ESMF_KIND_R8), public :: dt_atmos = 0
+  character(len=ESMF_MAXSTR),   public :: filename_base
+  character(len=ESMF_MAXSTR),   public :: cdate0
+  character(len=ESMF_MAXSTR),   public :: dirpath = 'DATM_INPUT/'
+  ! from nems.configure
                       integer, public  :: scalar_field_count = 0
                       integer, public  :: scalar_field_idx_grid_nx = 0
                       integer, public  :: scalar_field_idx_grid_ny = 0
-       real(kind=ESMF_KIND_R8), public :: dt_atmos 
-  character(len=ESMF_MAXSTR),   public :: filename_base 
-  character(len=ESMF_MAXSTR),   public :: cdate0 
-  character(len=ESMF_MAXSTR),   public :: dirpath = 'DATM_INPUT/'
-  character(len=ESMF_MAXSTR),   public :: scalar_field_name = ''
+                      integer, public  :: dbug = 0
+  character(len=ESMF_MAXSTR),  public  :: scalar_field_name = ''
 
   ! the forward and backward timestamps
      real(kind=ESMF_KIND_R8), public :: hfwd, hbak
@@ -63,8 +65,7 @@ module AtmInternalFields
 
   type(AtmField_Definition), public :: AtmBundleFields(AtmFieldCount)
 
-  integer, public   :: lPet, petCnt 
-  integer, public   :: dbug_flag = 0
+  integer, public   :: lPet, petCnt
   ! a diagnostic point to print at
   integer, public   :: iprnt, jprnt
   integer :: icnt
@@ -321,7 +322,7 @@ module AtmInternalFields
     call ESMF_LogWrite("ERROR: check # AtmBundleFields", ESMF_LOGMSG_INFO)
 
   !-----------------------------------------------------------------------------
-  ! get the input availability from the datm_data_table 
+  ! get the input availability from the datm_data_table
   !-----------------------------------------------------------------------------
 
     cfdata=ESMF_ConfigCreate(rc=rc)

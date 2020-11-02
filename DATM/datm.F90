@@ -129,17 +129,6 @@ module DAtm
                                   rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 #ifdef coupled
-   ! Use attributes
-    call ESMF_AttributeGet(model, &
-                           name="Coldstart", &
-                           value=value, &
-                           defaultValue="true", &
-                           convention="NUOPC", purpose="Instance", rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    coldstart=(trim(value)=="true")
-    write(msgString,'(A,l6)')'DATM ColdStart = ',coldstart
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
-
     call ESMF_AttributeGet(model, &
                            name="DumpFields", &
                            value=value, &
@@ -170,6 +159,10 @@ module DAtm
     if (isPresent .and. isSet) then
        scalar_field_name = trim(value)
        call ESMF_LogWrite('DATM: ScalarFieldName = '//trim(scalar_field_name), ESMF_LOGMSG_INFO)
+    else
+       rc = ESMF_FAILURE
+       call ESMF_LogWrite('ScalarFieldName must be set', ESMF_LOGMSG_ERROR)
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
     endif
 
     scalar_field_count = 0
@@ -186,6 +179,10 @@ module DAtm
        endif
        write(msgString,*) scalar_field_count
        call ESMF_LogWrite('DATM: ScalarFieldCount = '//trim(msgString), ESMF_LOGMSG_INFO)
+    else
+       rc = ESMF_FAILURE
+       call ESMF_LogWrite('ScalarFieldCount must be set', ESMF_LOGMSG_ERROR)
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
     endif
 
     scalar_field_idx_grid_nx = 0
@@ -202,6 +199,10 @@ module DAtm
        endif
        write(msgString,*) scalar_field_idx_grid_nx
        call ESMF_LogWrite('DATM: ScalarFieldIdxGridNX = '//trim(msgString), ESMF_LOGMSG_INFO)
+    else
+       rc = ESMF_FAILURE
+       call ESMF_LogWrite('ScalarFieldIdxGridNX must be set', ESMF_LOGMSG_ERROR)
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
     endif
 
     scalar_field_idx_grid_ny = 0
@@ -218,12 +219,27 @@ module DAtm
        endif
        write(msgString,*) scalar_field_idx_grid_ny
        call ESMF_LogWrite('DATM: ScalarFieldIdxGridNY = '//trim(msgString), ESMF_LOGMSG_INFO)
+    else
+       rc = ESMF_FAILURE
+       call ESMF_LogWrite('ScalarFieldIdxGridNY must be set', ESMF_LOGMSG_ERROR)
+       call ESMF_Finalize(endflag=ESMF_END_ABORT)
     endif
+
+    dbug = 0
+    call NUOPC_CompAttributeGet(model, name='dbug_flag', value=value, &
+         isPresent=isPresent, isSet=isSet, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+     read(value,*) dbug
+    end if
+    write(msgString,*) dbug
+    call ESMF_LogWrite('DATM: Debug flag = '//trim(msgString), ESMF_LOGMSG_INFO)
 #endif
 
     call ESMF_LogWrite("User initialize routine InitP0 Atm finished", ESMF_LOGMSG_INFO)
 
   end subroutine InitializeP0
+
 
   !-----------------------------------------------------------------------------
 
@@ -312,11 +328,6 @@ module DAtm
                             medAtmCouplingIntervalSec
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
-    call NUOPC_CompAttributeGet(model, name='DebugFlag', value=cvalue, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    read(cvalue,*) dbug_flag
-    write(msgString,'(a,i6)')'DebugFlag = ',dbug_flag
-    call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
     call ESMF_LogWrite("User initialize routine InitP1 Atm finished", ESMF_LOGMSG_INFO)
 
@@ -447,7 +458,7 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call ESMF_LogWrite('Atm InitializeDataComplete', ESMF_LOGMSG_INFO)
 
-    if(dbug_flag > 5)call AtmFieldCheck(exportState, 'InitP2 Atm', rc)
+    if(dbug > 5)call AtmFieldCheck(exportState, 'InitP2 Atm', rc)
 
     ! the initial fields at model startup
     if(dumpfields)then
@@ -525,7 +536,7 @@ module DAtm
     call AtmRun(model, exportState, modelClock, rc)
 
     ! Check Values
-    if(dbug_flag > 5)call AtmFieldCheck(exportState, 'after AtmRun', rc)
+    if(dbug > 5)call AtmFieldCheck(exportState, 'after AtmRun', rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     if(dumpfields)then

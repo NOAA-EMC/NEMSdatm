@@ -26,11 +26,11 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
   integer :: mytask
   integer :: ii,nfields
   integer :: iii, iid, iiu
-  logical :: fexists 
+  logical :: fexists
   integer :: fpresent(1) = 0
 
   character(len=ESMF_MAXSTR) :: varname
-  character(len=ESMF_MAXSTR) :: filename 
+  character(len=ESMF_MAXSTR) :: filename
   character(len=ESMF_MAXSTR) :: msgString
 
   character(len=4) :: cyear
@@ -55,8 +55,8 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
   call ESMF_VMGet(vm, localPet=mytask, rc=rc)
   if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
-  ! at initialization, get the current forecast hour file, not the forward 
-  ! forecast hour 
+  ! at initialization, get the current forecast hour file, not the forward
+  ! forecast hour
   if(initmode .eq. 0)then
 
    call ESMF_ClockGet(externalClock, currTime=currTime, rc=rc)
