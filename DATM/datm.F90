@@ -12,7 +12,7 @@ module DAtm
     model_routine_SS            => SetServices, &
     model_label_SetRunClock     => label_SetRunClock, &
     model_label_Advance         => label_Advance
- 
+
   ! Fields exported by Atm
   use AtmFieldUtils,     only : AtmFieldsAdvertise, AtmFieldsRealize
   use AtmFieldUtils,     only : AtmFieldDump
@@ -25,9 +25,9 @@ module DAtm
   use AtmInternalFields
 
   implicit none
-  
+
   private
-  
+
   public SetServices
 
   type(ESMF_VM)   :: vm
@@ -41,20 +41,20 @@ module DAtm
      __FILE__
 
   contains
-  
+
   subroutine SetServices(model, rc)
 
     type(ESMF_GridComp)  :: model
     integer, intent(out) :: rc
-    
+
     rc = ESMF_SUCCESS
-    
+
     ! the NUOPC model component will register the generic methods
     call NUOPC_CompDerive(model, model_routine_SS, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    
+
     ! set entry point for methods that require specific implementation
-    
+
     ! overwrite the default IPDv00 with IPDv02
     call ESMF_GridCompSetEntryPoint(model, &
                                     ESMF_METHOD_INITIALIZE, &
@@ -75,7 +75,7 @@ module DAtm
                                  phaseLabelList=(/"IPDv02p2"/), &
                                  userRoutine=InitializeP2, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    
+
     ! specialize label_SetRunClock which ensures the correct timeStep
     ! is set during the run cycle
     ! -> NUOPC specializes by default --->>> first need to remove the default
@@ -101,7 +101,7 @@ module DAtm
     call ESMF_VMGet(vm,petCount=petCnt,localPet=lPet,rc=rc)
 
   end subroutine SetServices
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine InitializeP0(model, importState, exportState, externalClock, rc)
@@ -177,7 +177,7 @@ module DAtm
          isPresent=isPresent, isSet=isSet, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     if (isPresent .and. isSet) then
-       read(value, '(i)', iostat=iostat) scalar_field_count
+       read(value, *, iostat=iostat) scalar_field_count
        if (iostat /= 0) then
          call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
               msg="DATM : ScalarFieldCount not an integer: "//trim(value), &
@@ -193,7 +193,7 @@ module DAtm
          isPresent=isPresent, isSet=isSet, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     if (isPresent .and. isSet) then
-       read(value, '(i)', iostat=iostat) scalar_field_idx_grid_nx
+       read(value, *, iostat=iostat) scalar_field_idx_grid_nx
        if (iostat /= 0) then
           call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
                msg="DATM : ScalarFieldIdxGridNX not an integer: "//trim(value), &
@@ -209,7 +209,7 @@ module DAtm
          isPresent=isPresent, isSet=isSet, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     if (isPresent .and. isSet) then
-       read(value, '(i)', iostat=iostat) scalar_field_idx_grid_ny
+       read(value, *, iostat=iostat) scalar_field_idx_grid_ny
        if (iostat /= 0) then
           call ESMF_LogSetError(ESMF_RC_ARG_BAD, &
                msg="DATM : ScalarFieldIdxGridNY not an integer: "//trim(value), &
@@ -228,13 +228,13 @@ module DAtm
   !-----------------------------------------------------------------------------
 
   subroutine InitializeP1(model, importState, exportState, externalClock, rc)
-   
+
     type(ESMF_GridComp)  :: model
     type(ESMF_State)     :: importState
     type(ESMF_State)     :: exportState
     type(ESMF_Clock)     :: externalClock
     integer, intent(out) :: rc
-   
+
     ! local variables
     type(ESMF_Config)       :: cf
     real(ESMF_KIND_R8)      :: medAtmCouplingIntervalSec
@@ -242,7 +242,7 @@ module DAtm
     character(20)           :: cvalue
 
     rc = ESMF_SUCCESS
-   
+
     call ESMF_LogWrite("User initialize routine InitP1 Atm started", ESMF_LOGMSG_INFO)
 
     ! Set up the fields in the AtmBundle
@@ -321,11 +321,11 @@ module DAtm
     call ESMF_LogWrite("User initialize routine InitP1 Atm finished", ESMF_LOGMSG_INFO)
 
   end subroutine InitializeP1
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine InitializeP2(model, importState, exportState, externalClock, rc)
-   
+
     type(ESMF_GridComp)  :: model
     type(ESMF_State)     :: importState
     type(ESMF_State)     :: exportState
@@ -333,7 +333,7 @@ module DAtm
     type(ESMF_Time)      :: currTime
     type(ESMF_VM)        :: vm
     integer, intent(out) :: rc
-    
+
     ! local variables
     type(ESMF_Grid)         :: gridIn
     type(ESMF_Grid)         :: gridOut
@@ -400,7 +400,7 @@ module DAtm
 
     call AtmInit(model, exportState, externalClock, rc)
 
-    ! AtmInit calls AtmForce and loads the values for the first integration 
+    ! AtmInit calls AtmForce and loads the values for the first integration
     ! timestep, so.....
     ! -> set Updated Field Attribute to "true", indicating to the IPDv02p5
     ! generic code to set the timestamp for this Field
@@ -417,7 +417,7 @@ module DAtm
 
       call ESMF_LogWrite(trim(AtmBundleFields(ii)%shortname)//' set to Updated', ESMF_LOGMSG_INFO)
     enddo !ii
-    
+
     ! set scalars for cmeps
     if(len_trim(scalar_field_name) > 0) then
       call State_SetScalar(dble(iatm),scalar_field_idx_grid_nx, exportState, localPet, &
@@ -462,14 +462,14 @@ module DAtm
     call ESMF_LogWrite("User initialize routine InitP2 Atm finished", ESMF_LOGMSG_INFO)
 
   end subroutine InitializeP2
-  
+
   !-----------------------------------------------------------------------------
 
   subroutine ModelAdvance(model, rc)
 
     type(ESMF_GridComp)  :: model
     integer, intent(out) :: rc
-    
+
     ! local variables
     type(ESMF_State)           :: exportState
     type(ESMF_Clock)           :: modelClock
@@ -483,7 +483,7 @@ module DAtm
     character(len=ESMF_MAXSTR) :: export_timestr
 
     rc = ESMF_SUCCESS
-  
+
     call ESMF_LogWrite("User routine ModelAdvance Atm started", ESMF_LOGMSG_INFO)
 
     ! query the Component for its clock and exportState
@@ -493,7 +493,7 @@ module DAtm
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! HERE THE MODEL ADVANCES: currTime -> currTime + timeStep
-    
+
     ! Because of the way that the internal Clock was set by default,
     ! its timeStep is equal to the parent timeStep. As a consequence the
     ! currTime + timeStep is equal to the stopTime of the internal Clock
