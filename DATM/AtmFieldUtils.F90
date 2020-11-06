@@ -253,7 +253,7 @@ module AtmFieldUtils
     fnamefwd = trim(AtmBundleFields(ii)%field_name)//'_fwd'
     fnamebak = trim(AtmBundleFields(ii)%field_name)//'_bak'
 
-    call ESMF_FieldBundleGet(AtmBundleFwd, & 
+    call ESMF_FieldBundleGet(AtmBundleFwd, &
                              fieldName=trim(fnamefwd), &
                              field=fieldfwd,rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -301,7 +301,7 @@ module AtmFieldUtils
     fnamefwd = trim(AtmBundleFields(ii)%field_name)//'_fwd'
     fnamebak = trim(AtmBundleFields(ii)%field_name)//'_bak'
 
-    call ESMF_FieldBundleGet(AtmBundleBak, & 
+    call ESMF_FieldBundleGet(AtmBundleBak, &
                              fieldName=trim(fnamebak), &
                              field=fieldbak,rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -373,7 +373,7 @@ module AtmFieldUtils
     fnamefwd = trim(AtmBundleFields(ii)%field_name)//'_fwd'
     fnamebak = trim(AtmBundleFields(ii)%field_name)//'_bak'
 
-    call ESMF_FieldBundleGet(AtmBundleFwd, & 
+    call ESMF_FieldBundleGet(AtmBundleFwd, &
                              fieldName=trim(fnamefwd), &
                              field=fieldfwd,rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -410,7 +410,7 @@ module AtmFieldUtils
     !                   real(AtmBundleFields(ii)%farrayPtr_fwd(ijloc(1),ijloc(2)),4)
     !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
 
-    if(dbug_flag > 0)then
+    if(dbug > 0)then
      write (msgString,*)' AtmIntp ',&
                         trim(AtmBundleFields(ii)%shortname),&
                         real(AtmBundleFields(ii)%farrayPtr(iprnt,jprnt),4),&

@@ -12,7 +12,7 @@ module AtmGridUtils
   private
 
   ! called by AtmGridSetUp
-  public :: WriteCoord, WriteMask 
+  public :: WriteCoord, WriteMask
  
   character(len=*),parameter :: u_FILE_u = &
      __FILE__

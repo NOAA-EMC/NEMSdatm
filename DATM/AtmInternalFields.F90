@@ -14,15 +14,17 @@ module AtmInternalFields
   private
 
   !from model_configure
-                       integer, public :: iatm,jatm,nfhout
+                      integer, public  :: iatm = 0, jatm = 0, nfhout = 0
+       real(kind=ESMF_KIND_R8), public :: dt_atmos = 0
+  character(len=ESMF_MAXSTR),   public :: filename_base
+  character(len=ESMF_MAXSTR),   public :: cdate0
+  character(len=ESMF_MAXSTR),   public :: dirpath = 'DATM_INPUT/'
+  ! from nems.configure
                       integer, public  :: scalar_field_count = 0
                       integer, public  :: scalar_field_idx_grid_nx = 0
                       integer, public  :: scalar_field_idx_grid_ny = 0
-       real(kind=ESMF_KIND_R8), public :: dt_atmos 
-  character(len=ESMF_MAXSTR),   public :: filename_base 
-  character(len=ESMF_MAXSTR),   public :: cdate0 
-  character(len=ESMF_MAXSTR),   public :: dirpath = 'DATM_INPUT/'
-  character(len=ESMF_MAXSTR),   public :: scalar_field_name = ''
+                      integer, public  :: dbug = 0
+  character(len=ESMF_MAXSTR),  public  :: scalar_field_name = ''
 
   ! the forward and backward timestamps
      real(kind=ESMF_KIND_R8), public :: hfwd, hbak
@@ -55,6 +57,7 @@ module AtmInternalFields
   type(ESMF_FieldBundle), public :: AtmBundleBak
 
   integer, parameter, public :: AtmFieldCount =  6  & !height lowest
+                                              +  4  & !10m,2m values
                                               +  3  & !swd,lwd,lwup
                                               +  1  & !net lw
                                               +  4  & !momentum,sens,lat
@@ -63,8 +66,7 @@ module AtmInternalFields
 
   type(AtmField_Definition), public :: AtmBundleFields(AtmFieldCount)
 
-  integer, public   :: lPet, petCnt 
-  integer, public   :: dbug_flag = 0
+  integer, public   :: lPet, petCnt
   ! a diagnostic point to print at
   integer, public   :: iprnt, jprnt
   integer :: icnt
@@ -179,6 +181,46 @@ module AtmInternalFields
     AtmBundleFields(ii)%field_name    = 'Plowest'
     AtmBundleFields(ii)%file_varname  = 'pres_hyblev1'
     AtmBundleFields(ii)%unit_name     = 'Pa'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+  !-----------------------------------------------------------------------------
+  !
+  !-----------------------------------------------------------------------------
+
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'inst_temp_height2m'
+    AtmBundleFields(ii)%field_name    = 'T2m'
+    AtmBundleFields(ii)%file_varname  = 't2m'
+    AtmBundleFields(ii)%unit_name     = 'K'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'inst_spec_humid_height2m'
+    AtmBundleFields(ii)%field_name    = 'Q2m'
+    AtmBundleFields(ii)%file_varname  = 'q2m'
+    AtmBundleFields(ii)%unit_name     = 'kg/kg'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'inst_zonal_wind_height10m'
+    AtmBundleFields(ii)%field_name    = 'U10m'
+    AtmBundleFields(ii)%file_varname  = 'u10m'
+    AtmBundleFields(ii)%unit_name     = 'm/s'
+    AtmBundleFields(ii)%farrayPtr_bak => null()
+    AtmBundleFields(ii)%farrayPtr_fwd => null()
+    AtmBundleFields(ii)%farrayPtr     => null()
+
+    ii = ii + 1
+    AtmBundleFields(ii)%standard_name = 'inst_merid_wind_height10m'
+    AtmBundleFields(ii)%field_name    = 'V10m'
+    AtmBundleFields(ii)%file_varname  = 'v10m'
+    AtmBundleFields(ii)%unit_name     = 'm/s'
     AtmBundleFields(ii)%farrayPtr_bak => null()
     AtmBundleFields(ii)%farrayPtr_fwd => null()
     AtmBundleFields(ii)%farrayPtr     => null()
@@ -321,7 +363,7 @@ module AtmInternalFields
     call ESMF_LogWrite("ERROR: check # AtmBundleFields", ESMF_LOGMSG_INFO)
 
   !-----------------------------------------------------------------------------
-  ! get the input availability from the datm_data_table 
+  ! get the input availability from the datm_data_table
   !-----------------------------------------------------------------------------
 
     cfdata=ESMF_ConfigCreate(rc=rc)
