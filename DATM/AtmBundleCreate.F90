@@ -62,8 +62,8 @@ subroutine AtmBundleCreate(gcomp, exportState, rc)
     call ESMF_FieldBundleAdd(AtmBundleFwd, (/field/), rc=rc)
     call ESMF_FieldGet(field, farrayPtr=AtmBundleFields(ii)%farrayPtr_fwd, rc=rc)
 
-    AtmBundleFields(ii)%farrayPtr_bak = 0.0
-    AtmBundleFields(ii)%farrayPtr_fwd = 0.0
+    AtmBundleFields(ii)%farrayPtr_bak = 0.0_ESMF_KIND_R8
+    AtmBundleFields(ii)%farrayPtr_fwd = 0.0_ESMF_KIND_R8
   enddo !ii
  
   !-------------------------------------------------------------------

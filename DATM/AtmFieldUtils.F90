@@ -109,7 +109,7 @@ module AtmFieldUtils
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
       ! initialize
-      field_defs(ii)%farrayPtr = 0.0
+      field_defs(ii)%farrayPtr = 0.0_ESMF_KIND_R8
 
       msgString = trim(tag)//" Field "// trim(field_defs(ii)%shortname) // " is connected on root pe"
       call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)

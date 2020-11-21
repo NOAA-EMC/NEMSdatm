@@ -160,8 +160,8 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
        call ESMF_LogWrite('Cannot create field '//trim(varname), ESMF_LOGMSG_INFO)
        call ESMF_Finalize(endflag=ESMF_END_ABORT)
       else
-       !AtmBundleFields(ii)%farrayPtr_fwd = AtmBundleFields(iid)%farrayPtr_fwd  &
-       !                                  - AtmBundleFields(iiu)%farrayPtr_fwd
+       AtmBundleFields(ii)%farrayPtr_fwd = AtmBundleFields(iid)%farrayPtr_fwd  &
+                                         - AtmBundleFields(iiu)%farrayPtr_fwd
       endif
     endif
    endif !not present
