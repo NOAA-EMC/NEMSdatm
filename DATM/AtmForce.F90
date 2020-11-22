@@ -126,6 +126,11 @@ subroutine AtmForce(gcomp,exportState,externalClock,initmode,rc)
       call ESMF_FieldGet(field,farrayPtr=AtmBundleFields(ii)%farrayPtr_fwd,rc=rc)
       if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
+      if((trim(varname(1:5)) .eq. 'vbdsf') .or. &
+         (trim(varname(1:5)) .eq. 'vddsf') .or. &
+         (trim(varname(1:5)) .eq. 'nbdsf') .or. &
+         (trim(varname(1:5)) .eq. 'nddsf'))AtmBundleFields(ii)%farrayPtr_fwd = 0.0_ESMF_KIND_R8
+
        write(msgString,'(i6,2a18,f14.5)')ii,' inside AtmForce  ',trim(varname), &
                                AtmBundleFields(ii)%farrayPtr_fwd(iprnt,jprnt)
        call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO)
