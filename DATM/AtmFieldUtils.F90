@@ -368,6 +368,7 @@ module AtmFieldUtils
 
     call ESMF_FieldGet(field, farrayPtr=AtmBundleFields(ii)%farrayPtr, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    AtmBundleFields(ii)%farrayPtr = 0.0_ESMF_KIND_R8
 
     ! get the corresponding _fwd and _bak fields
     fnamefwd = trim(AtmBundleFields(ii)%field_name)//'_fwd'
