@@ -119,7 +119,7 @@ module AtmModel
     call ESMF_TimeGet(currTime,mm=imonth,h_r8=hour,m_r8=minut,rc=rc)
 
     ! new forcing increment
-    if(mod(minut,real(nfhout)*60.0_ESMF_KIND_R8) .eq. 0)then
+    if(mod(minut,real(nfhout)*60.0) .eq. 0)then
      ! move the current fwd values to bak
      call AtmForceFwd2Bak(rc)
      ! copy the fwd timestamp to the bak timestamp
