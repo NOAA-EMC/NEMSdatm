@@ -97,8 +97,8 @@ module AtmModel
     integer, intent(out) :: rc
    
     ! Local variables
-    type(ESMF_Time)      :: currTime
-
+    type(ESMF_Time)              :: currTime
+    type(ESMF_TimeInterval)      :: timeStep
       integer(kind=ESMF_KIND_I4) :: iyear,imonth,iday,ihour,iminut
          real(kind=ESMF_KIND_R8) :: hour,minut
     character(len=ESMF_MAXSTR)   :: msgString
@@ -127,13 +127,13 @@ module AtmModel
      ! get new forcing data---always fills the _fwd values in AtmBundle
      call AtmForce(gcomp,exportState,externalClock,1,rc)
     endif
-    ! get the current time of the model clock
-    call ESMF_ClockGet(externalClock, currTime=currTime, rc=rc)
+    call ESMF_ClockGet(externalClock, currTime=currTime, timestep=timeStep, rc=rc)
     call ESMF_TimeGet(currTime,yy=iyear,mm=imonth,dd=iday,h=ihour,m=iminut,rc=rc)
     !write(msgString,*)iyear,imonth,iday,ihour,iminut
     !call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
-    
-    call ESMF_TimeGet(currTime,h_r8=hour,rc=rc)
+
+    ! get the ending time of the model clock; this is the time we need to interpolate the values to
+    call ESMF_TimeGet(currTime+timestep,h_r8=hour,rc=rc)
     write(msgString,*)'AtmRun: hbkd,hour,hfwd ', hbak,hour,hfwd
     call ESMF_LogWrite(trim(msgString), ESMF_LOGMSG_INFO, rc=rc)
     
